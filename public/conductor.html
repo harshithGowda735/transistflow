@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TransitPulse / Namma Raste - Conductor Mode</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body style="background: #f1f5f9;">
+  <!-- Header -->
+  <header class="gov-header">
+    <div class="brand-section">
+      <span class="brand-emblem">KA</span>
+      <div>
+        <span class="brand-title">TransitPulse Conductor</span>
+        <span class="brand-kannada">ನಿರ್ವಾಹಕರ ಪೋರ್ಟಲ್</span>
+      </div>
+    </div>
+    <div class="header-links">
+      <a href="/" class="nav-link">Passenger View</a>
+      <a href="/admin.html" class="nav-link">Admin Dashboard</a>
+      <a href="/conductor.html" class="nav-link active">Conductor Mode</a>
+    </div>
+  </header>
+
+  <div style="max-width: 480px; margin: 30px auto; padding: 0 16px;">
+    <!-- Conductor Smartphone Interface Card -->
+    <div style="background: white; border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden;">
+      
+      <!-- Top banner -->
+      <div style="background: var(--primary-navy); color: white; padding: 18px 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Conductor Mobile Terminal</div>
+            <h2 style="font-size: 18px; font-weight: 800; margin-top: 2px;">Ramesh Kumar</h2>
+          </div>
+          <div id="tripBadge" class="badge badge-ready">READY</div>
+        </div>
+      </div>
+
+      <!-- Assignment Details -->
+      <div style="padding: 20px;">
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; padding: 14px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-size: 12px; color: var(--text-muted);">Assigned Bus:</span>
+            <strong style="font-size: 14px; color: var(--primary-navy);">Bus 23A (KA-01-F-2301)</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-size: 12px; color: var(--text-muted);">Assigned Route:</span>
+            <strong style="font-size: 13px; color: var(--text-dark);">Majestic → Vijayanagar</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-size: 12px; color: var(--text-muted);">Tracking Mode:</span>
+            <span style="font-size: 12px; color: var(--primary-accent); font-weight: 600;">Zero-Hardware Phone GPS</span>
+          </div>
+        </div>
+
+        <!-- Telemetry Status Panel (Active during trip) -->
+        <div id="liveGpsPanel" style="display: none; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 14px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 8px; color: #047857; font-weight: 700; font-size: 13px; margin-bottom: 6px;">
+            <span class="pulse-dot"></span> GPS STREAMING ACTIVE
+          </div>
+          <p style="font-size: 11px; color: #065f46;">
+            Your smartphone is currently transmitting live coordinates to the central control room and passengers.
+          </p>
+          <div style="margin-top: 10px; font-size: 11px; color: #047857; font-family: monospace;">
+            Lat: <span id="gpsLat">12.9774</span> | Lng: <span id="gpsLng">77.5708</span><br>
+            Last Ping: <span id="gpsTime">Just now</span>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <button id="btnTripAction" class="btn btn-primary" onclick="toggleTrip()" style="width: 100%; padding: 14px; font-size: 15px; font-weight: 700;">
+          ▶ START TRIP
+        </button>
+
+        <!-- Informational Notice -->
+        <div style="margin-top: 16px; font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.4;">
+          During an active trip, GPS telemetry is controlled by the trip session. Keep this browser tab open on your smartphone.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let isTripActive = false;
+    let watchId = null;
+    const socket = io();
+
+    function toggleTrip() {
+      if (!isTripActive) {
+        startTrip();
+      } else {
+        endTrip();
+      }
+    }
+
+    function startTrip() {
+      fetch('/api/trip/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ busNumber: '23A', conductorId: 'COND_01' })
+      })
+      .then(res => res.json())
+      .then(data => {
+        isTripActive = true;
+        document.getElementById('tripBadge').className = 'badge badge-ontime';
+        document.getElementById('tripBadge').innerHTML = '<span class="pulse-dot"></span> LIVE';
+        document.getElementById('liveGpsPanel').style.display = 'block';
+        document.getElementById('btnTripAction').className = 'btn btn-danger';
+        document.getElementById('btnTripAction').innerText = '⏹ END TRIP';
+
+        // Start HTML5 Continuous Geolocation Tracking
+        if (navigator.geolocation) {
+          watchId = navigator.geolocation.watchPosition(
+            (pos) => {
+              const lat = pos.coords.latitude;
+              const lng = pos.coords.longitude;
+              const speed = (pos.coords.speed || 8) * 3.6; // convert m/s to km/h
+
+              document.getElementById('gpsLat').innerText = lat.toFixed(4);
+              document.getElementById('gpsLng').innerText = lng.toFixed(4);
+              document.getElementById('gpsTime').innerText = new Date().toLocaleTimeString();
+
+              // Send GPS update to server
+              socket.emit('conductor_gps', {
+                busNumber: '23A',
+                lat: lat,
+                lng: lng,
+                speed: speed
+              });
+            },
+            (err) => console.warn('Geolocation warning/demo mode:', err.message),
+            { enableHighAccuracy: true, maximumAge: 2000, timeout: 5000 }
+          );
+        }
+      });
+    }
+
+    function endTrip() {
+      fetch('/api/trip/end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ busNumber: '23A', conductorId: 'COND_01' })
+      })
+      .then(res => res.json())
+      .then(data => {
+        isTripActive = false;
+        if (watchId) {
+          navigator.geolocation.clearWatch(watchId);
+          watchId = null;
+        }
+        document.getElementById('tripBadge').className = 'badge badge-ready';
+        document.getElementById('tripBadge').innerText = 'READY';
+        document.getElementById('liveGpsPanel').style.display = 'none';
+        document.getElementById('btnTripAction').className = 'btn btn-primary';
+        document.getElementById('btnTripAction').innerText = '▶ START TRIP';
+      });
+    }
+  </script>
+</body>
+</html>

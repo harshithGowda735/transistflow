@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TransitPulse / Namma Raste - Live Bus Tracking</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header class="gov-header">
+    <div class="brand-section">
+      <span class="brand-emblem">KA</span>
+      <div>
+        <span class="brand-title">TransitPulse</span>
+        <span class="brand-kannada">ನಮ್ಮ ರಸ್ತೆ</span>
+      </div>
+    </div>
+    <div class="header-links">
+      <a href="/" class="nav-link active">Passenger View</a>
+      <a href="/admin.html" class="nav-link">Admin Dashboard</a>
+      <a href="/conductor.html" class="nav-link">Conductor Mode</a>
+    </div>
+    <div class="gov-subtext">Government of Karnataka • Mobility Platform</div>
+  </header>
+
+  <!-- App Body -->
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar-panel">
+      <!-- Bus Selection Header -->
+      <div style="padding: 16px; border-bottom: 1px solid var(--border-color); background: #fafafa;">
+        <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Select Active Bus</label>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <button id="btnBus23A" class="btn btn-primary" style="flex: 1; font-size: 12px;" onclick="selectBus('23A')">
+            Bus 23A (Majestic)
+          </button>
+          <button id="btnBus17B" class="btn btn-outline" style="flex: 1; font-size: 12px;" onclick="selectBus('17B')">
+            Bus 17B (Bogadi)
+          </button>
+        </div>
+      </div>
+
+      <!-- Alert Banner Container (Auto-detected) -->
+      <div id="alertContainer"></div>
+
+      <!-- Fallback Option Card (Appears automatically on service delay) -->
+      <div id="fallbackContainer"></div>
+
+      <!-- Active Bus Live Info Card -->
+      <div style="padding: 16px; flex: 1;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div>
+            <h2 id="busTitle" style="font-size: 20px; font-weight: 800; color: var(--primary-navy);">Bus 23A</h2>
+            <div id="routeSubtitle" style="font-size: 13px; color: var(--text-muted);">Majestic → Vijayanagar</div>
+          </div>
+          <div id="statusBadge" class="badge badge-ontime">
+            <span class="pulse-dot"></span> <span id="statusText">ON TIME</span>
+          </div>
+        </div>
+
+        <!-- Telemetry Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+          <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+            <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">ESTIMATED ARRIVAL</div>
+            <div id="etaDisplay" style="font-size: 22px; font-weight: 800; color: var(--primary-navy);">8 min</div>
+            <div id="delayDeltaText" style="font-size: 11px; color: var(--status-delayed); font-weight: 600;">Normal Schedule</div>
+          </div>
+          <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+            <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">NEXT STOP</div>
+            <div id="nextStopDisplay" style="font-size: 14px; font-weight: 700; color: var(--text-dark); margin-top: 4px;">KR Market</div>
+            <div id="distanceDisplay" style="font-size: 11px; color: var(--text-muted);">1.8 km remaining</div>
+          </div>
+        </div>
+
+        <!-- Speed & Telemetry Meta -->
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); padding: 8px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 16px;">
+          <div>Current Speed: <strong id="speedDisplay" style="color: var(--text-dark);">32 km/h</strong></div>
+          <div>GPS Source: <strong style="color: var(--primary-accent);">Conductor Phone</strong></div>
+        </div>
+
+        <!-- Route Stops Timeline -->
+        <div>
+          <h3 style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px;">Route Stops</h3>
+          <div id="stopsList" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Leaflet Map Container -->
+    <main class="map-view">
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let selectedBusNumber = '23A';
+    let fleetData = {};
+    let routesData = {};
+    let map, routePolyline, busMarker, stopMarkers = [];
+
+    // Initialize Leaflet Map
+    function initMap() {
+      map = L.map('map', { zoomControl: true }).setView([12.9774, 77.5708], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+    }
+
+    // Switch between buses
+    function selectBus(busNumber) {
+      selectedBusNumber = busNumber;
+      document.getElementById('btnBus23A').className = busNumber === '23A' ? 'btn btn-primary' : 'btn btn-outline';
+      document.getElementById('btnBus17B').className = busNumber === '17B' ? 'btn btn-primary' : 'btn btn-outline';
+      renderView();
+    }
+
+    function renderView() {
+      const bus = fleetData[selectedBusNumber];
+      if (!bus) return;
+
+      const route = routesData[bus.routeId];
+      if (!route) return;
+
+      // Update Info Card
+      document.getElementById('busTitle').innerText = `Bus ${bus.busNumber}`;
+      document.getElementById('routeSubtitle').innerText = `${route.name} (${route.city})`;
+      document.getElementById('etaDisplay').innerText = `${bus.etaMinutes} min`;
+      document.getElementById('nextStopDisplay').innerText = bus.nextStop || 'En Route';
+      document.getElementById('distanceDisplay').innerText = `${bus.distanceRemainingKm} km remaining`;
+      document.getElementById('speedDisplay').innerText = `${bus.speedKmph} km/h`;
+
+      // Status Badge
+      const statusBadge = document.getElementById('statusBadge');
+      const statusText = document.getElementById('statusText');
+      const delayDeltaText = document.getElementById('delayDeltaText');
+
+      if (bus.status === 'DELAYED') {
+        statusBadge.className = 'badge badge-delayed';
+        statusText.innerText = 'DELAYED';
+        delayDeltaText.innerText = `+${bus.delayMinutes} min delay detected`;
+      } else if (bus.status === 'ROUTE_DEVIATION') {
+        statusBadge.className = 'badge badge-deviation';
+        statusText.innerText = 'DEVIATION';
+        delayDeltaText.innerText = 'Off expected corridor';
+      } else {
+        statusBadge.className = 'badge badge-ontime';
+        statusText.innerText = 'ON TIME';
+        delayDeltaText.innerText = 'Normal Schedule';
+      }
+
+      // Render Alert Banner if delayed or deviated
+      const alertContainer = document.getElementById('alertContainer');
+      if (bus.status === 'DELAYED') {
+        alertContainer.innerHTML = `
+          <div class="alert-banner">
+            <div class="alert-title">⚠ AUTOMATIC DELAY DETECTED</div>
+            <div class="alert-msg">Bus ${bus.busNumber} is moving slower than expected schedule (+${bus.delayMinutes} min delay).</div>
+          </div>
+        `;
+      } else if (bus.status === 'ROUTE_DEVIATION') {
+        alertContainer.innerHTML = `
+          <div class="alert-banner critical">
+            <div class="alert-title">🚨 ROUTE DEVIATION DETECTED</div>
+            <div class="alert-msg">Bus ${bus.busNumber} has deviated from assigned route corridor.</div>
+          </div>
+        `;
+      } else {
+        alertContainer.innerHTML = '';
+      }
+
+      // Render Fallback Card if Bus 17B is delayed
+      const fallbackContainer = document.getElementById('fallbackContainer');
+      if (bus.status === 'DELAYED' && bus.busNumber === '17B') {
+        fallbackContainer.innerHTML = `
+          <div class="fallback-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="fallback-badge">Smart Fallback</span>
+              <span style="font-size: 11px; color: #1e40af; font-weight: 600;">Service Issue Detected</span>
+            </div>
+            <div style="font-size: 12px; color: #1e3a8a; margin-top: 6px;">
+              Bus 17B is delayed. Suggested alternatives:
+            </div>
+            <div class="fallback-option">
+              <div>
+                <strong style="font-size: 12px; color: #1e293b;">Alternative: Bus 23A</strong>
+                <div style="font-size: 11px; color: var(--status-ontime); font-weight: 600;">● On Time • Arriving in 7 min</div>
+              </div>
+              <button class="btn btn-outline" style="font-size: 11px; padding: 4px 8px;" onclick="selectBus('23A')">Track Bus</button>
+            </div>
+            <div class="fallback-option">
+              <div>
+                <strong style="font-size: 12px; color: #1e293b;">Partner Ride (Auto/Cab)</strong>
+                <div style="font-size: 11px; color: #64748b;">
+                  <span style="text-decoration: line-through;">₹80</span> <strong style="color: var(--primary-navy);">₹60</strong> (TransitPulse Subsidy)
+                </div>
+              </div>
+              <button class="btn btn-primary" style="font-size: 11px; padding: 4px 8px;">Book Ride</button>
+            </div>
+          </div>
+        `;
+      } else {
+        fallbackContainer.innerHTML = '';
+      }
+
+      // Render Route Stops
+      const stopsList = document.getElementById('stopsList');
+      stopsList.innerHTML = route.stops.map((stop, idx) => `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 10px; height: 10px; border-radius: 50%; background: ${stop.name === bus.nextStop ? '#cc0000' : '#1a2744'}; border: 2px solid #fff; box-shadow: 0 0 0 1px #cbd5e1;"></div>
+          <div style="flex: 1;">
+            <div style="font-size: 13px; font-weight: ${stop.name === bus.nextStop ? '700' : '500'}; color: ${stop.name === bus.nextStop ? '#cc0000' : '#1e293b'};">
+              ${stop.name} ${stop.name === bus.nextStop ? '<span style="font-size: 10px; background: #fee2e2; color: #991b1b; padding: 1px 4px; border-radius: 2px; margin-left: 4px;">NEXT</span>' : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Update Map elements
+      updateMapElements(bus, route);
+    }
+
+    function updateMapElements(bus, route) {
+      if (!map) return;
+
+      // Draw/update route polyline
+      if (routePolyline) map.removeLayer(routePolyline);
+      routePolyline = L.polyline(route.path, {
+        color: bus.status === 'DELAYED' ? '#f59e0b' : '#2563eb',
+        weight: 5,
+        opacity: 0.8
+      }).addTo(map);
+
+      // Draw/update stop markers
+      stopMarkers.forEach(m => map.removeLayer(m));
+      stopMarkers = [];
+      route.stops.forEach(stop => {
+        const marker = L.circleMarker([stop.lat, stop.lng], {
+          radius: 6,
+          fillColor: '#ffffff',
+          color: '#1a2744',
+          weight: 2,
+          fillOpacity: 1
+        }).addTo(map);
+        marker.bindPopup(`<strong>Stop: ${stop.name}</strong>`);
+        stopMarkers.push(marker);
+      });
+
+      // Draw/update Bus marker
+      const busLat = bus.currentLocation.lat;
+      const busLng = bus.currentLocation.lng;
+
+      const busHtml = `<div class="custom-bus-icon ${bus.status === 'DELAYED' ? 'delayed' : ''}">🚌 ${bus.busNumber}</div>`;
+      const customIcon = L.divIcon({
+        className: 'bus-div-icon',
+        html: busHtml,
+        iconSize: [60, 24],
+        iconAnchor: [30, 12]
+      });
+
+      if (busMarker) {
+        busMarker.setLatLng([busLat, busLng]);
+        busMarker.setIcon(customIcon);
+      } else {
+        busMarker = L.marker([busLat, busLng], { icon: customIcon }).addTo(map);
+      }
+
+      busMarker.bindPopup(`
+        <div style="font-size: 12px;">
+          <strong>Bus ${bus.busNumber}</strong><br>
+          Status: <strong>${bus.status}</strong><br>
+          ETA: ${bus.etaMinutes} min<br>
+          Next: ${bus.nextStop}
+        </div>
+      `);
+
+      map.panTo([busLat, busLng]);
+    }
+
+    // Socket.IO Setup
+    const socket = io();
+
+    socket.on('fleet_init', (data) => {
+      fleetData = data.buses;
+      routesData = data.routes;
+      renderView();
+    });
+
+    socket.on('fleet_update', (data) => {
+      fleetData = data.buses;
+      renderView();
+    });
+
+    // Initial load
+    window.addEventListener('DOMContentLoaded', () => {
+      initMap();
+      fetch('/api/buses')
+        .then(res => res.json())
+        .then(data => {
+          fleetData = data.buses;
+          return fetch('/api/routes');
+        })
+        .then(res => res.json())
+        .then(data => {
+          routesData = data.routes;
+          renderView();
+        })
+        .catch(err => console.error('Failed to load initial data:', err));
+    });
+  </script>
+</body>
+</html>
