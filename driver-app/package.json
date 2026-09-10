@@ -1,0 +1,9 @@
+{
+  "name": "transitpulse-driver-app",
+  "version": "1.0.0",
+  "description": "TransitPulse Driver and Conductor Mobile Smartphone Terminal",
+  "scripts": {
+    "start": "npx serve public"
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TransitFlow - Driver Terminal</title>
+  <link rel="stylesheet" href="/driver/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="driver-header">
+    <div class="driver-brand">
+      <div style="width: 32px; height: 32px; background: var(--driver-accent); color: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px;">TF</div>
+      <div>
+        <div class="driver-title">TransitFlow Driver App</div>
+        <div style="font-size: 11px; color: var(--driver-accent); font-weight: 700;">Mobile Location Terminal</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 6px;">
+      <a href="/index.html" style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-decoration: none; padding: 5px 9px; background: #f1f5f9; border-radius: 6px;">Passenger</a>
+      <a href="/admin.html" style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-decoration: none; padding: 5px 9px; background: #f1f5f9; border-radius: 6px;">Owner</a>
+    </div>
+  </header>
+
+  <div class="driver-container">
+    <div class="terminal-card">
+      <div class="card-header">
+        <div>
+          <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">DRIVER TELEMETRY TERMINAL</div>
+          <div id="conductorName" style="font-size: 16px; font-weight: 800; color: var(--text-dark); margin-top: 2px;">Ramesh Kumar</div>
+        </div>
+        <div id="trackingStatusBadge" class="status-indicator status-ready">
+          Tracking Off
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="busSelect">Select Assigned Bus Number</label>
+        <select id="busSelect" class="form-select" onchange="onBusSelectChange()">
+          <option value="23A">Bus 23A (KA-01-F-2301) - Majestic to Vijayanagar</option>
+          <option value="17B">Bus 17B (KA-09-F-1702) - Bogadi to Mysuru Stand</option>
+        </select>
+      </div>
+
+      <div class="telemetry-grid">
+        <div class="telemetry-box">
+          <div class="telemetry-label">Latitude</div>
+          <div id="valLat" class="telemetry-val">12.9774</div>
+        </div>
+        <div class="telemetry-box">
+          <div class="telemetry-label">Longitude</div>
+          <div id="valLng" class="telemetry-val">77.5708</div>
+        </div>
+        <div class="telemetry-box">
+          <div class="telemetry-label">Live Speed</div>
+          <div id="valSpeed" class="telemetry-val" style="color: #10b981;">0 km/h</div>
+        </div>
+        <div class="telemetry-box">
+          <div class="telemetry-label">Last GPS Ping</div>
+          <div id="valLastPing" class="telemetry-val" style="font-size: 13px; margin-top: 6px;">Standby</div>
+        </div>
+      </div>
+
+      <div style="padding: 0 16px 16px 16px;">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); cursor: pointer; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--card-border);">
+          <input type="checkbox" id="chkIndoorDemo" onchange="toggleIndoorDemo(this.checked)" style="accent-color: var(--driver-accent); width: 16px; height: 16px;" />
+          <span style="font-weight: 700; color: var(--text-dark);">Simulate Movement (Indoor Demo)</span>
+        </label>
+      </div>
+    </div>
+
+    <button id="btnTripToggle" class="btn-large btn-start" onclick="toggleTrip()">
+      Start Sharing Location
+    </button>
+
+    <div class="hud-notice">
+      Streams live GPS coordinates directly to Passenger View map and Owner Dashboard.
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/driver/src/js/driver.js"></script>
+</body>
+</html>

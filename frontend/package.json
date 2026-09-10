@@ -1,0 +1,9 @@
+{
+  "name": "transitpulse-frontend",
+  "version": "1.0.0",
+  "description": "TransitPulse Commuter Portal and Fleet Operations Dashboard",
+  "scripts": {
+    "start": "npx serve public"
+  },
+  "dependencies": {}
+}
