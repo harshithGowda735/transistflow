@@ -2,16 +2,17 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const { Server } = require('socket.io');
 
-const { ROUTES } = require('./models');
 const {
-  getBuses,
+  getAllBuses,
+  getAllRoutes,
   getAlerts,
+  registerNewBus,
   processGPSUpdate,
-  startSimulationEngine,
-  resetSimulation,
-  isSimulating
+  setTripStatus,
+  syncInitialData
 } = require('./logic');
 
 const app = express();
@@ -25,6 +26,16 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 3000;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/transitflow';
+
+mongoose.connect(MONGODB_URI, {
+  serverSelectionTimeoutMS: 2500
+}).then(async () => {
+  console.log('[TransitFlow] Connected to MongoDB database successfully.');
+  await syncInitialData();
+}).catch((err) => {
+  console.log('[TransitFlow] MongoDB connection optional/unavailable. Operating in high-resiliency store mode.');
+});
 
 app.use(cors());
 app.use(express.json());
@@ -35,117 +46,162 @@ const driverPublicPath = path.join(__dirname, '..', 'driver-app', 'public');
 app.use(express.static(frontendPublicPath));
 app.use('/driver', express.static(driverPublicPath));
 
-function broadcastFleetUpdate(payload) {
-  io.emit('fleet_update', payload);
+async function broadcastFleetUpdate(extra = {}) {
+  const buses = await getAllBuses();
+  const alerts = getAlerts();
+  io.emit('fleet_update', {
+    buses,
+    alerts,
+    ...extra
+  });
 }
 
-app.get('/api/buses', (req, res) => {
-  res.json({ success: true, buses: getBuses(), isSimulating: isSimulating() });
+app.get('/api/buses', async (req, res) => {
+  try {
+    const buses = await getAllBuses();
+    res.json({ success: true, buses });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
-app.get('/api/routes', (req, res) => {
-  res.json({ success: true, routes: ROUTES });
+app.post('/api/buses', async (req, res) => {
+  try {
+    const newBus = await registerNewBus(req.body);
+    await broadcastFleetUpdate({ addedBus: newBus.busNumber });
+    res.status(201).json({ success: true, bus: newBus });
+  } catch (err) {
+    const statusCode = err.status || 400;
+    res.status(statusCode).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/routes', async (req, res) => {
+  try {
+    const routes = await getAllRoutes();
+    res.json({ success: true, routes });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 app.get('/api/alerts', (req, res) => {
   res.json({ success: true, alerts: getAlerts() });
 });
 
-app.post('/api/gps', (req, res) => {
-  const { busNumber, lat, lng, speed, conductorId } = req.body;
-  if (!busNumber || lat === undefined || lng === undefined) {
-    return res.status(400).json({ error: 'Missing busNumber, lat or lng' });
+app.post('/api/gps', async (req, res) => {
+  const { busNumber, lat, lng, speed } = req.body;
+  if (!busNumber) {
+    return res.status(400).json({ success: false, error: 'busNumber is required' });
+  }
+  if (lat === undefined || isNaN(Number(lat)) || lng === undefined || isNaN(Number(lng))) {
+    return res.status(400).json({ success: false, error: 'Valid numeric lat and lng are required' });
   }
 
-  const buses = getBuses();
-  const bus = buses[busNumber];
-  if (!bus) {
-    return res.status(404).json({ error: `Bus ${busNumber} not found` });
+  try {
+    const result = await processGPSUpdate(busNumber, lat, lng, speed);
+    await broadcastFleetUpdate({ updatedBus: busNumber });
+    res.json({ success: true, bus: result.bus });
+  } catch (err) {
+    const statusCode = err.status || 500;
+    res.status(statusCode).json({ success: false, error: err.message });
   }
-
-  if (conductorId && bus.conductorId !== conductorId) {
-    return res.status(403).json({ error: 'Unauthorized conductor for this bus' });
-  }
-
-  const result = processGPSUpdate(busNumber, parseFloat(lat), parseFloat(lng), speed || 30);
-  
-  broadcastFleetUpdate({
-    buses: getBuses(),
-    alerts: getAlerts(),
-    updatedBus: busNumber,
-    isSimulating: isSimulating()
-  });
-
-  res.json({ success: true, bus: result.bus });
 });
 
-app.post('/api/trip/start', (req, res) => {
-  const { busNumber, conductorId } = req.body;
-  const buses = getBuses();
-  const bus = buses[busNumber];
-  if (!bus) return res.status(404).json({ error: 'Bus not found' });
-
-  bus.isTripActive = true;
-  bus.status = 'LIVE';
-  bus.lastUpdated = new Date().toISOString();
-
-  broadcastFleetUpdate({ buses: getBuses(), alerts: getAlerts(), isSimulating: isSimulating() });
-  res.json({ success: true, message: `Trip started for Bus ${busNumber}`, bus });
-});
-
-app.post('/api/trip/end', (req, res) => {
+app.post('/api/trip/start', async (req, res) => {
   const { busNumber } = req.body;
-  const buses = getBuses();
-  const bus = buses[busNumber];
-  if (!bus) return res.status(404).json({ error: 'Bus not found' });
+  if (!busNumber) {
+    return res.status(400).json({ success: false, error: 'busNumber is required' });
+  }
 
-  bus.isTripActive = false;
-  bus.status = 'READY';
-  bus.lastUpdated = new Date().toISOString();
-
-  broadcastFleetUpdate({ buses: getBuses(), alerts: getAlerts(), isSimulating: isSimulating() });
-  res.json({ success: true, message: `Trip ended for Bus ${busNumber}`, bus });
+  try {
+    const bus = await setTripStatus(busNumber, true);
+    await broadcastFleetUpdate({ updatedBus: busNumber });
+    res.json({ success: true, bus });
+  } catch (err) {
+    const statusCode = err.status || 500;
+    res.status(statusCode).json({ success: false, error: err.message });
+  }
 });
 
-app.post('/api/simulation/start', (req, res) => {
-  startSimulationEngine(broadcastFleetUpdate);
-  res.json({ success: true, message: 'Simulation started' });
+app.post('/api/trip/end', async (req, res) => {
+  const { busNumber } = req.body;
+  if (!busNumber) {
+    return res.status(400).json({ success: false, error: 'busNumber is required' });
+  }
+
+  try {
+    const bus = await setTripStatus(busNumber, false);
+    await broadcastFleetUpdate({ updatedBus: busNumber });
+    res.json({ success: true, bus });
+  } catch (err) {
+    const statusCode = err.status || 500;
+    res.status(statusCode).json({ success: false, error: err.message });
+  }
 });
 
-app.post('/api/simulation/reset', (req, res) => {
-  resetSimulation(broadcastFleetUpdate);
-  res.json({ success: true, message: 'Simulation reset' });
+const osrmRouteCache = {};
+app.get('/api/route/osrm', async (req, res) => {
+  const { coords } = req.query;
+  if (!coords) {
+    return res.status(400).json({ error: 'Coordinates query parameter required (lng,lat;lng,lat)' });
+  }
+
+  if (osrmRouteCache[coords]) {
+    return res.json(osrmRouteCache[coords]);
+  }
+
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`OSRM API response status: ${response.status}`);
+    }
+    const data = await response.json();
+    if (data.code === 'Ok' && data.routes && data.routes[0]) {
+      const coordinates = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+      const payload = { success: true, path: coordinates, distance: data.routes[0].distance, duration: data.routes[0].duration };
+      osrmRouteCache[coords] = payload;
+      return res.json(payload);
+    }
+    res.status(400).json({ success: false, error: 'Could not calculate road route' });
+  } catch (err) {
+    res.status(502).json({ success: false, error: err.message });
+  }
 });
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
+  const buses = await getAllBuses();
+  const routes = await getAllRoutes();
+  const alerts = getAlerts();
+
   socket.emit('fleet_init', {
-    buses: getBuses(),
-    routes: ROUTES,
-    alerts: getAlerts(),
-    isSimulating: isSimulating()
+    buses,
+    routes,
+    alerts
   });
 
-  socket.on('conductor_gps', (data) => {
+  socket.on('conductor_gps', async (data) => {
     const { busNumber, lat, lng, speed } = data;
-    if (busNumber && lat && lng) {
-      processGPSUpdate(busNumber, parseFloat(lat), parseFloat(lng), speed || 30);
-      broadcastFleetUpdate({
-        buses: getBuses(),
-        alerts: getAlerts(),
-        isSimulating: isSimulating()
-      });
+    if (busNumber && lat !== undefined && lng !== undefined) {
+      try {
+        await processGPSUpdate(busNumber, lat, lng, speed);
+        await broadcastFleetUpdate({ updatedBus: busNumber });
+      } catch (e) {}
     }
   });
 
-  socket.on('trigger_simulation', () => {
-    startSimulationEngine(broadcastFleetUpdate);
-  });
-
-  socket.on('reset_simulation', () => {
-    resetSimulation(broadcastFleetUpdate);
+  socket.on('trip_toggle', async (data) => {
+    const { busNumber, active } = data;
+    if (busNumber) {
+      try {
+        await setTripStatus(busNumber, active);
+        await broadcastFleetUpdate({ updatedBus: busNumber });
+      } catch (e) {}
+    }
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`[TransitPulse Backend] Server running on http://localhost:${PORT}`);
+  console.log(`[TransitFlow Server] Running on http://localhost:${PORT}`);
 });

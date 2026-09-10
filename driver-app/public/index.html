@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TransitFlow - Driver Terminal</title>
+  <title>TransitFlow - Driver Live Telemetry Terminal</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="styles/driver.css">
   <link rel="stylesheet" href="/driver/styles/driver.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,15 +14,15 @@
 <body>
   <header class="driver-header">
     <div class="driver-brand">
-      <div style="width: 32px; height: 32px; background: var(--driver-accent); color: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px;">TF</div>
+      <div style="width: 34px; height: 34px; background: var(--driver-accent); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px;">TF</div>
       <div>
-        <div class="driver-title">TransitFlow Driver App</div>
-        <div style="font-size: 11px; color: var(--driver-accent); font-weight: 700;">Mobile Location Terminal</div>
+        <div class="driver-title">TransitFlow Driver Console</div>
+        <div style="font-size: 11px; color: var(--driver-accent); font-weight: 700;">Live GPS & Telemetry Transmission</div>
       </div>
     </div>
     <div style="display: flex; gap: 6px;">
-      <a href="/index.html" style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-decoration: none; padding: 5px 9px; background: #f1f5f9; border-radius: 6px;">Passenger</a>
-      <a href="/admin.html" style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-decoration: none; padding: 5px 9px; background: #f1f5f9; border-radius: 6px;">Owner</a>
+      <a href="/index.html" style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-decoration: none; padding: 6px 10px; background: #f1f5f9; border-radius: 6px;">Passenger</a>
+      <a href="/admin.html" style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-decoration: none; padding: 6px 10px; background: #f1f5f9; border-radius: 6px;">Owner</a>
     </div>
   </header>
 
@@ -29,8 +30,8 @@
     <div class="terminal-card">
       <div class="card-header">
         <div>
-          <div style="font-size: 13px; font-weight: 800; color: var(--text-dark);" id="conductorName">Ramesh Kumar</div>
-          <div style="font-size: 11px; color: var(--text-muted);">Assigned Conductor</div>
+          <div style="font-size: 14px; font-weight: 800; color: var(--text-dark);" id="conductorName">Ramesh Kumar</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Assigned Driver Telemetry</div>
         </div>
         <div id="trackingStatusBadge" class="status-indicator status-ready">
           Tracking Off
@@ -38,10 +39,9 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Select Assigned Vehicle</label>
+        <label class="form-label">Select Assigned Vehicle (MongoDB)</label>
         <select id="busSelect" class="form-select" onchange="onBusSelectChange()">
-          <option value="23A">Bus 23A (KA-01-F-2301) - Majestic to Vijayanagar</option>
-          <option value="17B">Bus 17B (KA-09-F-1702) - Bogadi to Mysuru Stand</option>
+          <option value="23A">Loading registered fleet...</option>
         </select>
       </div>
 
@@ -55,33 +55,49 @@
           <div class="telemetry-val" id="valLng">--</div>
         </div>
         <div class="telemetry-box">
-          <div class="telemetry-label">GPS Speed</div>
+          <div class="telemetry-label">Instant Speed</div>
           <div class="telemetry-val" id="valSpeed">0 km/h</div>
         </div>
         <div class="telemetry-box">
-          <div class="telemetry-label">Last Ping</div>
-          <div class="telemetry-val" id="valLastPing">--</div>
+          <div class="telemetry-label">Trip Duration</div>
+          <div class="telemetry-val" id="valDuration" style="color: var(--driver-accent);">00:00:00</div>
+        </div>
+        <div class="telemetry-box" style="grid-column: span 2;">
+          <div class="telemetry-label">Last Transmission Ping</div>
+          <div class="telemetry-val" id="valLastPing" style="font-size: 14px;">Awaiting active trip</div>
         </div>
       </div>
 
-      <div style="padding: 0 16px 16px 16px;">
-        <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); cursor: pointer; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--card-border);">
-          <input type="checkbox" id="chkIndoorDemo" onchange="toggleIndoorDemo(this.checked)" style="accent-color: var(--driver-accent); width: 16px; height: 16px;" />
-          <span style="font-weight: 700; color: var(--text-dark);">Simulate Movement (Indoor Demo)</span>
+      <div class="driver-mini-map-container">
+        <div id="driverMiniMap"></div>
+      </div>
+
+      <div class="simulation-toggle-box" style="margin-top: 14px;">
+        <label class="simulation-label">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="chkSimulateTrip" onchange="toggleSimulationMode(this.checked)" style="accent-color: var(--driver-accent); width: 18px; height: 18px;" />
+            <div>
+              <div style="font-weight: 800; color: #9a3412;">Simulate Trip (Demo Mode)</div>
+              <div style="font-size: 10.5px; color: #c2410c;">Traverse real road route at realistic city speed (25-35 km/h)</div>
+            </div>
+          </div>
         </label>
       </div>
     </div>
 
     <button id="btnTripToggle" class="btn-large btn-start" onclick="toggleTrip()">
-      Start Sharing Location
+      Start Trip & Transmit GPS
     </button>
 
     <div class="hud-notice">
-      Streams live GPS coordinates directly to Passenger View map and Owner Dashboard.
+      Streams high-frequency GPS coordinates to MongoDB and broadcasts real-time position to Passenger View & Owner Operations.
     </div>
   </div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/socket.io/socket.io.js"></script>
+  <script src="js/simulation.js"></script>
+  <script src="/driver/js/simulation.js"></script>
   <script src="js/driver.js"></script>
   <script src="/driver/js/driver.js"></script>
 </body>

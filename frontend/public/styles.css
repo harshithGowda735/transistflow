@@ -1,13 +1,9 @@
-.bus-pin-div-icon,
-.leaflet-marker-icon {
-  transition: transform 1s ease-out !important;
-}
-
 :root {
   --primary-navy: #0f172a;
   --primary-orange: #ea580c;
   --primary-orange-light: #fff7ed;
   --primary-blue: #2563eb;
+  --border-black: #0f172a;
   --bg-main: #ffffff;
   --bg-subtle: #f8fafc;
   --surface: #ffffff;
@@ -15,11 +11,11 @@
   --text-dark: #0f172a;
   --text-muted: #64748b;
   --status-ontime: #10b981;
-  --status-delayed: #f59e0b;
+  --status-delayed: #ea580c;
   --status-deviation: #ef4444;
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-pill: 9999px;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -42,6 +38,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.bus-pin-div-icon,
+.leaflet-marker-icon {
+  transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
 
 .gov-header {
   background: #ffffff;
@@ -122,7 +122,6 @@ body {
   border-color: #cbd5e1;
 }
 
-
 .app-container {
   display: flex;
   flex: 1;
@@ -132,7 +131,7 @@ body {
 }
 
 .sidebar-panel {
-  width: 400px;
+  width: 420px;
   background: #ffffff;
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -154,6 +153,63 @@ body {
   height: 100%;
 }
 
+.route-selector-card {
+  padding: 18px;
+  border-bottom: 1px solid var(--border-color);
+  background: #ffffff;
+  position: relative;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
+}
+
+.swap-divider-container {
+  position: relative;
+  height: 28px;
+  margin: 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.swap-divider-line {
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  background: var(--border-color);
+  z-index: 1;
+}
+
+.swap-circle-btn {
+  position: relative;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--border-black);
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+
+.swap-circle-btn:hover {
+  background: var(--primary-orange);
+  color: #ffffff;
+  transform: rotate(180deg) scale(1.05);
+}
 
 .badge {
   display: inline-flex;
@@ -206,17 +262,16 @@ body {
   100% { transform: scale(0.9); opacity: 1; }
 }
 
-
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 8px 14px;
   font-size: 13px;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
+  font-weight: 700;
+  border-radius: var(--radius-pill);
   cursor: pointer;
-  border: none;
+  border: 2px solid var(--border-black);
   transition: all 0.2s ease;
   font-family: inherit;
 }
@@ -224,7 +279,6 @@ body {
 .btn-primary {
   background: var(--primary-orange);
   color: white;
-  box-shadow: 0 2px 4px rgba(234, 88, 12, 0.25);
 }
 
 .btn-primary:hover {
@@ -233,24 +287,12 @@ body {
 
 .btn-outline {
   background: white;
-  border: 1px solid var(--border-color);
   color: var(--text-dark);
 }
 
 .btn-outline:hover {
   background: #f8fafc;
-  border-color: #cbd5e1;
 }
-
-.btn-danger {
-  background: #dc2626;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #b91c1c;
-}
-
 
 .alert-banner {
   background: #fffbeb;
@@ -291,7 +333,6 @@ body {
   color: #7f1d1d;
 }
 
-
 .fallback-card {
   background: linear-gradient(145deg, #fff7ed 0%, #f0fdf4 100%);
   border: 1px solid #fed7aa;
@@ -323,58 +364,106 @@ body {
   border: 1px solid #fed7aa;
 }
 
-
-.gov-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  text-align: left;
-}
-
-.gov-table th {
-  background: #f8fafc;
-  color: var(--text-muted);
-  font-weight: 700;
-  font-size: 11px;
-  text-transform: uppercase;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.gov-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-dark);
-}
-
-.gov-table tr:hover {
-  background: #fff7ed;
-}
-
-
-.custom-bus-icon {
-  background: #ea580c;
-  color: white;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 4px 8px;
-  border-radius: 12px;
-  border: 2px solid white;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-  white-space: nowrap;
+.custom-bus-pin-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  transform: translate(0, 0);
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25));
 }
 
-.custom-bus-icon.delayed {
-  background: #d97706;
+.pin-badge {
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  border: 1.5px solid #ffffff;
+  white-space: nowrap;
+  margin-bottom: -4px;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-.custom-bus-icon.deviated {
+.custom-bus-pin-container.delayed .pin-badge {
+  background: #ea580c;
+}
+
+.custom-bus-pin-container.deviated .pin-badge {
   background: #dc2626;
 }
 
+.pin-icon-img {
+  width: 48px;
+  height: 48px;
+  animation: radarWave 2s infinite ease-out;
+}
+
+@keyframes radarWave {
+  0% { transform: scale(0.96); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(0.96); }
+}
+
+.user-live-pin {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-pulse {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.35);
+  animation: userRadar 1.8s infinite ease-out;
+}
+
+.user-dot {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+@keyframes userRadar {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.destination-node-marker {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: destGlow 2.5s infinite;
+}
+
+.destination-inner-core {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+@keyframes destGlow {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+  70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
 
 .search-wrapper {
   position: relative;
@@ -447,15 +536,68 @@ body {
   font-weight: 500;
 }
 
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
 
-.mobile-view-frame {
-  max-width: 420px;
-  margin: 20px auto;
-  border-radius: 20px;
-  border: 3px solid #0f172a;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-  background: #ffffff;
+.kpi-card {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.kpi-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.kpi-value {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--primary-navy);
+}
+
+.data-table-container {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.data-table th {
+  background: #f8fafc;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-dark);
+}
+
+.data-table tr:hover {
+  background: #f8fafc;
 }
 
 @media (max-width: 768px) {

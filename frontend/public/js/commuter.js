@@ -6,7 +6,7 @@ let routesData = {};
 let transitMap = null;
 let toastDismissed = false;
 
-const knownStops = [
+let knownStops = [
   { name: 'Majestic KBS', code: 'Majestic', city: 'Bengaluru' },
   { name: 'KR Market', code: 'KR Market', city: 'Bengaluru' },
   { name: 'Sirsi Circle', code: 'Sirsi Circle', city: 'Bengaluru' },
@@ -18,30 +18,20 @@ const knownStops = [
   { name: 'Mysuru Suburb Stand', code: 'Mysuru Stand', city: 'Mysuru' }
 ];
 
-function checkBusDelays() {
-  const tenMinutesMs = 10 * 60 * 1000;
-  const now = Date.now();
-
-  Object.values(fleetData).forEach(bus => {
-    if (bus.isTripActive && bus.lastUpdated) {
-      const elapsed = now - new Date(bus.lastUpdated).getTime();
-      if (elapsed > tenMinutesMs) {
-        bus.status = 'DELAYED';
-        bus.delayMinutes = Math.floor(elapsed / 60000);
-      }
+function updateKnownStopsFromRoutes() {
+  if (!routesData) return;
+  const stopsList = [];
+  Object.values(routesData).forEach(r => {
+    if (r.stops) {
+      r.stops.forEach(s => {
+        if (!stopsList.some(item => item.name === s.name)) {
+          stopsList.push({ name: s.name, code: s.name, city: r.city || '' });
+        }
+      });
     }
   });
-}
-
-function loadOwnerBuses() {
-  try {
-    const saved = localStorage.getItem('transitflow_owner_buses');
-    if (saved) {
-      const customBuses = JSON.parse(saved);
-      fleetData = { ...fleetData, ...customBuses };
-    }
-  } catch (e) {
-    console.warn(e);
+  if (stopsList.length > 0) {
+    knownStops = stopsList;
   }
 }
 
@@ -135,11 +125,17 @@ function resolveRouteMatch() {
   const o = currentOrigin.toLowerCase();
   const d = currentDestination.toLowerCase();
 
+  let matchedRouteId = 'ROUTE_23A';
   if (o.includes('bogadi') || d.includes('mysuru') || o.includes('mysuru') || d.includes('bogadi') || o.includes('kuvempu') || d.includes('kuvempu')) {
-    selectBus('17B');
-  } else {
-    const matchingBus = Object.values(fleetData).find(b => b.routeId === 'ROUTE_23A') || { busNumber: '23A' };
+    matchedRouteId = 'ROUTE_17B';
+  }
+
+  const matchingBus = Object.values(fleetData).find(b => b.routeId === matchedRouteId);
+  if (matchingBus) {
     selectBus(matchingBus.busNumber);
+  } else {
+    const fallbackBus = Object.values(fleetData)[0];
+    if (fallbackBus) selectBus(fallbackBus.busNumber);
   }
 }
 
@@ -156,9 +152,6 @@ function dismissToast() {
 }
 
 function renderView() {
-  loadOwnerBuses();
-  checkBusDelays();
-
   const bus = fleetData[selectedBusNumber] || Object.values(fleetData)[0];
   if (!bus) return;
 
@@ -167,10 +160,10 @@ function renderView() {
 
   document.getElementById('busTitle').innerText = `Bus ${bus.busNumber}`;
   document.getElementById('routeSubtitle').innerText = `${currentOrigin} to ${currentDestination} (${route.name})`;
-  document.getElementById('etaDisplay').innerText = `${bus.etaMinutes} min`;
+  document.getElementById('etaDisplay').innerText = `${bus.etaMinutes || 10} min`;
   document.getElementById('nextStopDisplay').innerText = bus.nextStop || 'En Route';
-  document.getElementById('distanceDisplay').innerText = `${bus.distanceRemainingKm} km remaining`;
-  document.getElementById('speedDisplay').innerText = `${bus.speedKmph} km/h`;
+  document.getElementById('distanceDisplay').innerText = `${bus.distanceRemainingKm || 5.0} km remaining`;
+  document.getElementById('speedDisplay').innerText = `${bus.speedKmph || 0} km/h`;
 
   const statusBadge = document.getElementById('statusBadge');
   const statusText = document.getElementById('statusText');
@@ -179,7 +172,7 @@ function renderView() {
   if (bus.status === 'DELAYED') {
     statusBadge.className = 'badge badge-delayed';
     statusText.innerText = 'DELAYED';
-    delayDeltaText.innerText = `+${bus.delayMinutes || 10} min delay detected`;
+    delayDeltaText.innerText = `+${bus.delayMinutes || 6} min delay detected`;
   } else if (bus.status === 'ROUTE_DEVIATION') {
     statusBadge.className = 'badge badge-deviation';
     statusText.innerText = 'DEVIATION';
@@ -196,7 +189,7 @@ function renderView() {
       <div class="alert-banner" style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
           <div class="alert-title">SERVICE DELAY NOTIFICATION</div>
-          <div class="alert-msg">Bus ${bus.busNumber} on this route is currently delayed (+${bus.delayMinutes || 10} mins).</div>
+          <div class="alert-msg">Bus ${bus.busNumber} on this route is currently delayed (+${bus.delayMinutes || 6} mins).</div>
         </div>
         <button onclick="dismissToast()" style="background: none; border: none; font-size: 14px; font-weight: 800; cursor: pointer; color: #92400e; padding: 0 4px;">&times;</button>
       </div>
@@ -240,20 +233,36 @@ function renderView() {
   }
 
   const stopsList = document.getElementById('stopsList');
-  stopsList.innerHTML = route.stops.map((stop) => `
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <div style="width: 10px; height: 10px; border-radius: 50%; background: ${stop.name.toLowerCase().includes(bus.nextStop ? bus.nextStop.toLowerCase() : '') ? '#ea580c' : '#0f172a'}; border: 2px solid #fff; box-shadow: 0 0 0 1.5px #cbd5e1;"></div>
-      <div style="flex: 1;">
-        <div style="font-size: 13px; font-weight: ${stop.name.toLowerCase().includes(bus.nextStop ? bus.nextStop.toLowerCase() : '') ? '700' : '500'}; color: ${stop.name.toLowerCase().includes(bus.nextStop ? bus.nextStop.toLowerCase() : '') ? '#ea580c' : '#1e293b'};">
-          ${stop.name} ${stop.name.toLowerCase().includes(bus.nextStop ? bus.nextStop.toLowerCase() : '') ? '<span style="font-size: 10px; background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; padding: 1px 5px; border-radius: 9999px; margin-left: 4px; font-weight: 800;">NEXT</span>' : ''}
+  if (route.stops) {
+    stopsList.innerHTML = route.stops.map((stop) => `
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 10px; height: 10px; border-radius: 50%; background: ${stop.name.toLowerCase().includes(bus.nextStop ? bus.nextStop.toLowerCase() : '') ? '#ea580c' : '#0f172a'}; border: 2px solid #fff; box-shadow: 0 0 0 1.5px #cbd5e1;"></div>
+        <div style="flex: 1;">
+          <div style="font-size: 13px; font-weight: ${stop.name.toLowerCase().includes(bus.nextStop ? bus.nextStop.toLowerCase() : '') ? '700' : '500'}; color: ${stop.name.toLowerCase().includes(bus.nextStop ? bus.nextStop.toLowerCase() : '') ? '#ea580c' : '#1e293b'};">
+            ${stop.name} ${stop.name.toLowerCase().includes(bus.nextStop ? bus.nextStop.toLowerCase() : '') ? '<span style="font-size: 10px; background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; padding: 1px 5px; border-radius: 9999px; margin-left: 4px; font-weight: 800;">NEXT</span>' : ''}
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
+  }
 
   if (transitMap) {
     transitMap.drawDynamicRoute(currentOrigin, currentDestination, route, bus.status);
     transitMap.updateBusMarker(bus, true);
+  }
+}
+
+function initUserGeolocation() {
+  if (navigator.geolocation && transitMap) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        transitMap.setUserLocation(pos.coords.latitude, pos.coords.longitude);
+      },
+      () => {
+        transitMap.setUserLocation(12.9716, 77.5946);
+      },
+      { timeout: 4000 }
+    );
   }
 }
 
@@ -263,30 +272,30 @@ if (socket) {
   socket.on('fleet_init', (data) => {
     fleetData = data.buses;
     routesData = data.routes;
-    loadOwnerBuses();
+    updateKnownStopsFromRoutes();
     renderView();
   });
 
   socket.on('fleet_update', (data) => {
     fleetData = data.buses;
-    loadOwnerBuses();
     renderView();
   });
 }
 
 window.addEventListener('DOMContentLoaded', () => {
   transitMap = new TransitMap('map', [12.9774, 77.5708], 13);
-  
+  initUserGeolocation();
+
   fetch('/api/buses')
     .then(res => res.json())
     .then(data => {
       fleetData = data.buses;
-      loadOwnerBuses();
       return fetch('/api/routes');
     })
     .then(res => res.json())
     .then(data => {
       routesData = data.routes;
+      updateKnownStopsFromRoutes();
       renderView();
     })
     .catch(err => console.warn(err));

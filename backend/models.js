@@ -1,6 +1,127 @@
-const ROUTES = {
+const mongoose = require('mongoose');
+
+const BusSchema = new mongoose.Schema({
+  busNumber: { 
+    type: String, 
+    required: [true, 'Bus number is required'], 
+    trim: true, 
+    unique: true 
+  },
+  registrationNumber: { 
+    type: String, 
+    required: [true, 'Registration number is required'], 
+    trim: true 
+  },
+  routeId: { 
+    type: String, 
+    required: [true, 'Route ID is required'], 
+    trim: true 
+  },
+  conductorId: { 
+    type: String, 
+    trim: true, 
+    default: '' 
+  },
+  conductorName: { 
+    type: String, 
+    trim: true, 
+    default: 'Assigned Driver' 
+  },
+  capacity: { 
+    type: Number, 
+    min: [1, 'Capacity must be at least 1'], 
+    default: 40 
+  },
+  status: { 
+    type: String, 
+    enum: ['READY', 'LIVE', 'ON TIME', 'DELAYED', 'ROUTE_DEVIATION', 'COMPLETED'], 
+    default: 'READY' 
+  },
+  currentLocation: {
+    lat: { type: Number, required: [true, 'Latitude is required'] },
+    lng: { type: Number, required: [true, 'Longitude is required'] }
+  },
+  speedKmph: { 
+    type: Number, 
+    min: [0, 'Speed cannot be negative'], 
+    default: 0 
+  },
+  etaMinutes: { 
+    type: Number, 
+    min: [0, 'ETA cannot be negative'], 
+    default: 10 
+  },
+  delayMinutes: { 
+    type: Number, 
+    min: [0, 'Delay cannot be negative'], 
+    default: 0 
+  },
+  distanceRemainingKm: { 
+    type: Number, 
+    min: [0, 'Distance cannot be negative'], 
+    default: 5.0 
+  },
+  nextStop: { 
+    type: String, 
+    trim: true, 
+    default: 'Depot' 
+  },
+  isTripActive: { 
+    type: Boolean, 
+    default: false 
+  },
+  lastUpdated: { 
+    type: Date, 
+    default: Date.now 
+  }
+}, { timestamps: true });
+
+const OwnerSchema = new mongoose.Schema({
+  name: { type: String, required: [true, 'Owner name is required'], trim: true },
+  email: { type: String, trim: true },
+  phone: { type: String, trim: true },
+  company: { type: String, trim: true }
+}, { timestamps: true });
+
+const DriverSchema = new mongoose.Schema({
+  name: { type: String, required: [true, 'Driver name is required'], trim: true },
+  phone: { type: String, trim: true },
+  licenseNumber: { type: String, trim: true },
+  assignedBusNumber: { type: String, trim: true },
+  activeStatus: { type: Boolean, default: true }
+}, { timestamps: true });
+
+const RouteSchema = new mongoose.Schema({
+  routeId: { type: String, required: [true, 'Route ID is required'], unique: true, trim: true },
+  name: { type: String, required: [true, 'Route name is required'], trim: true },
+  city: { type: String, required: [true, 'City is required'], trim: true },
+  stops: [{
+    name: { type: String, required: true },
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true },
+    order: { type: Number, required: true }
+  }],
+  path: [[Number]]
+}, { timestamps: true });
+
+const TripLocationLogSchema = new mongoose.Schema({
+  busNumber: { type: String, required: true, trim: true },
+  tripId: { type: String, trim: true },
+  lat: { type: Number, required: true },
+  lng: { type: Number, required: true },
+  speed: { type: Number, default: 0 },
+  timestamp: { type: Date, default: Date.now }
+});
+
+const BusModel = mongoose.models.Bus || mongoose.model('Bus', BusSchema);
+const OwnerModel = mongoose.models.Owner || mongoose.model('Owner', OwnerSchema);
+const DriverModel = mongoose.models.Driver || mongoose.model('Driver', DriverSchema);
+const RouteModel = mongoose.models.Route || mongoose.model('Route', RouteSchema);
+const TripLocationLogModel = mongoose.models.TripLocationLog || mongoose.model('TripLocationLog', TripLocationLogSchema);
+
+const INITIAL_ROUTES = {
   'ROUTE_23A': {
-    id: 'ROUTE_23A',
+    routeId: 'ROUTE_23A',
     name: 'Majestic → Vijayanagar',
     city: 'Bengaluru',
     stops: [
@@ -25,7 +146,7 @@ const ROUTES = {
     ]
   },
   'ROUTE_17B': {
-    id: 'ROUTE_17B',
+    routeId: 'ROUTE_17B',
     name: 'Bogadi → Mysuru Bus Stand',
     city: 'Mysuru',
     stops: [
@@ -48,48 +169,46 @@ const ROUTES = {
   }
 };
 
-function createInitialFleet() {
-  return {
-    '23A': {
-      busNumber: '23A',
-      registrationNumber: 'KA-01-F-2301',
-      routeId: 'ROUTE_23A',
-      conductorId: 'COND_01',
-      conductorName: 'Ramesh Kumar',
-      status: 'ON TIME',
-      isTripActive: false,
-      currentLocation: { lat: 12.9774, lng: 77.5708 },
-      speedKmph: 32,
-      etaMinutes: 8,
-      delayMinutes: 0,
-      expectedProgressPct: 0,
-      actualProgressPct: 0,
-      distanceRemainingKm: 6.2,
-      nextStop: 'KR Market',
-      lastUpdated: new Date().toISOString(),
-      simulationIndex: 0
-    },
-    '17B': {
-      busNumber: '17B',
-      registrationNumber: 'KA-09-F-1702',
-      routeId: 'ROUTE_17B',
-      conductorId: 'COND_02',
-      conductorName: 'Suresh Gowda',
-      status: 'ON TIME',
-      isTripActive: false,
-      currentLocation: { lat: 12.3025, lng: 76.6080 },
-      speedKmph: 28,
-      etaMinutes: 10,
-      delayMinutes: 0,
-      expectedProgressPct: 0,
-      actualProgressPct: 0,
-      distanceRemainingKm: 5.4,
-      nextStop: 'Kuvempunagar Complex',
-      lastUpdated: new Date().toISOString(),
-      simulationIndex: 0
-    }
-  };
-}
+const INITIAL_BUSES = {
+  '23A': {
+    busNumber: '23A',
+    registrationNumber: 'KA-01-F-2301',
+    routeId: 'ROUTE_23A',
+    conductorId: 'COND_01',
+    conductorName: 'Ramesh Kumar',
+    capacity: 45,
+    status: 'ON TIME',
+    isTripActive: false,
+    currentLocation: { lat: 12.9774, lng: 77.5708 },
+    speedKmph: 32,
+    etaMinutes: 8,
+    delayMinutes: 0,
+    expectedProgressPct: 0,
+    actualProgressPct: 0,
+    distanceRemainingKm: 6.2,
+    nextStop: 'KR Market',
+    lastUpdated: new Date()
+  },
+  '17B': {
+    busNumber: '17B',
+    registrationNumber: 'KA-09-F-1702',
+    routeId: 'ROUTE_17B',
+    conductorId: 'COND_02',
+    conductorName: 'Suresh Gowda',
+    capacity: 50,
+    status: 'ON TIME',
+    isTripActive: false,
+    currentLocation: { lat: 12.3025, lng: 76.6080 },
+    speedKmph: 28,
+    etaMinutes: 10,
+    delayMinutes: 0,
+    expectedProgressPct: 0,
+    actualProgressPct: 0,
+    distanceRemainingKm: 5.4,
+    nextStop: 'Kuvempunagar Complex',
+    lastUpdated: new Date()
+  }
+};
 
 function createAlertModel(busNumber, type, message, severity = 'MEDIUM') {
   return {
@@ -103,7 +222,12 @@ function createAlertModel(busNumber, type, message, severity = 'MEDIUM') {
 }
 
 module.exports = {
-  ROUTES,
-  createInitialFleet,
+  BusModel,
+  OwnerModel,
+  DriverModel,
+  RouteModel,
+  TripLocationLogModel,
+  INITIAL_ROUTES,
+  INITIAL_BUSES,
   createAlertModel
 };

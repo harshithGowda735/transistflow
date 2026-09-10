@@ -2,91 +2,83 @@ let adminTransitMap = null;
 let fleetData = {};
 let routesData = {};
 
-function checkBusDelays() {
-  const tenMinutesMs = 10 * 60 * 1000;
-  const now = Date.now();
-
-  Object.values(fleetData).forEach(bus => {
-    if (bus.isTripActive && bus.lastUpdated) {
-      const elapsed = now - new Date(bus.lastUpdated).getTime();
-      if (elapsed > tenMinutesMs) {
-        bus.status = 'DELAYED';
-        bus.delayMinutes = Math.floor(elapsed / 60000);
-      }
-    }
-  });
-}
-
-function loadOwnerBuses() {
-  try {
-    const saved = localStorage.getItem('transitflow_owner_buses');
-    if (saved) {
-      const customBuses = JSON.parse(saved);
-      fleetData = { ...fleetData, ...customBuses };
-    }
-  } catch (e) {
-    console.warn(e);
-  }
-}
-
-function handleOwnerAddBus(event) {
+async function handleOwnerAddBus(event) {
   event.preventDefault();
   const busNumber = document.getElementById('newBusNumber').value.trim();
-  const registrationNumber = document.getElementById('newRegNumber').value.trim() || `KA-01-F-${Math.floor(1000 + Math.random() * 9000)}`;
-  const driverName = document.getElementById('newDriverName').value.trim() || 'Assigned Driver';
+  const registrationNumber = document.getElementById('newRegNumber').value.trim();
+  const driverName = document.getElementById('newDriverName').value.trim();
   const routeId = document.getElementById('newRouteSelect').value;
 
-  if (!busNumber) return;
+  const notice = document.getElementById('ownerNotice');
+  const errorNotice = document.getElementById('ownerErrorNotice');
 
-  const defaultLoc = routeId === 'ROUTE_17B' ? { lat: 12.3025, lng: 76.6080 } : { lat: 12.9774, lng: 77.5708 };
-  const route = routesData[routeId] || { stops: [{ name: 'Depot' }] };
+  if (notice) notice.style.display = 'none';
+  if (errorNotice) errorNotice.style.display = 'none';
 
-  const newBus = {
-    busNumber: busNumber,
-    registrationNumber: registrationNumber,
-    routeId: routeId,
-    conductorId: `COND_${busNumber}`,
-    conductorName: driverName,
-    status: 'READY',
-    isTripActive: false,
-    currentLocation: defaultLoc,
-    speedKmph: 0,
-    etaMinutes: 12,
-    delayMinutes: 0,
-    distanceRemainingKm: 5.0,
-    nextStop: route.stops[0] ? route.stops[0].name : 'Depot',
-    lastUpdated: new Date().toISOString()
+  if (!busNumber) {
+    if (errorNotice) {
+      errorNotice.innerText = 'Bus Number is required';
+      errorNotice.style.display = 'block';
+    }
+    return;
+  }
+
+  const payload = {
+    busNumber,
+    registrationNumber: registrationNumber || `KA-01-F-${Math.floor(1000 + Math.random() * 9000)}`,
+    routeId,
+    conductorName: driverName || 'Assigned Driver',
+    capacity: 45
   };
 
-  fleetData[busNumber] = newBus;
-
   try {
-    const saved = localStorage.getItem('transitflow_owner_buses');
-    const existing = saved ? JSON.parse(saved) : {};
-    existing[busNumber] = newBus;
-    localStorage.setItem('transitflow_owner_buses', JSON.stringify(existing));
-  } catch (e) {
-    console.warn(e);
+    const res = await fetch('/api/buses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      if (errorNotice) {
+        errorNotice.innerText = data.error || 'Failed to add bus';
+        errorNotice.style.display = 'block';
+      }
+      return;
+    }
+
+    if (notice) {
+      notice.innerText = `Bus ${busNumber} registered successfully in MongoDB! Available in Driver Terminal.`;
+      notice.style.display = 'block';
+      setTimeout(() => { notice.style.display = 'none'; }, 5000);
+    }
+
+    document.getElementById('newBusNumber').value = '';
+    document.getElementById('newRegNumber').value = '';
+    document.getElementById('newDriverName').value = '';
+
+    await reloadFleet();
+  } catch (err) {
+    if (errorNotice) {
+      errorNotice.innerText = err.message || 'Network error adding bus';
+      errorNotice.style.display = 'block';
+    }
   }
+}
 
-  const notice = document.getElementById('ownerNotice');
-  if (notice) {
-    notice.innerText = `Bus ${busNumber} added successfully! Drivers can now select Bus ${busNumber} in the Driver App.`;
-    notice.style.display = 'block';
-    setTimeout(() => { notice.style.display = 'none'; }, 5000);
-  }
-
-  document.getElementById('newBusNumber').value = '';
-  document.getElementById('newRegNumber').value = '';
-  document.getElementById('newDriverName').value = '';
-
-  renderFleet();
+async function reloadFleet() {
+  try {
+    const res = await fetch('/api/buses');
+    const data = await res.json();
+    if (data.success && data.buses) {
+      fleetData = data.buses;
+      renderFleet();
+    }
+  } catch (e) {}
 }
 
 function renderFleet() {
-  loadOwnerBuses();
-  checkBusDelays();
-
   const tbody = document.getElementById('fleetTableBody');
   if (!tbody) return;
 
@@ -96,7 +88,7 @@ function renderFleet() {
   let activeCount = 0;
 
   tbody.innerHTML = busesList.map(bus => {
-    const route = routesData[bus.routeId] || { name: 'Unassigned', city: '' };
+    const route = routesData[bus.routeId] || { name: bus.routeId || 'Unassigned', city: '' };
     if (bus.isTripActive) activeCount++;
     if (bus.status === 'ON TIME') onTimeCount++;
     if (bus.status === 'DELAYED') delayedCount++;
@@ -109,13 +101,13 @@ function renderFleet() {
     return `
       <tr>
         <td><strong style="color: var(--primary-navy); font-size: 14px;">${bus.busNumber}</strong> <span style="font-size: 11px; color: var(--text-muted);">(${bus.registrationNumber})</span></td>
-        <td>${route.name} <span style="font-size: 11px; color: var(--text-muted);">${route.city}</span></td>
-        <td>${bus.conductorName} <span style="font-size: 10px; color: var(--primary-orange); font-weight: 700;">Mobile GPS</span></td>
-        <td><strong>${bus.speedKmph} km/h</strong></td>
+        <td>${route.name} <span style="font-size: 11px; color: var(--text-muted);">${route.city || ''}</span></td>
+        <td>${bus.conductorName || 'Assigned Driver'} <span style="font-size: 10px; color: var(--primary-orange); font-weight: 700;">Mobile GPS</span></td>
+        <td><strong>${bus.speedKmph || 0} km/h</strong></td>
         <td>${bus.nextStop || 'Depot'}</td>
-        <td><strong>${bus.etaMinutes} min</strong> ${bus.delayMinutes > 0 ? `<span style="color: var(--status-delayed); font-size: 11px;">(+${bus.delayMinutes}m delay)</span>` : ''}</td>
-        <td><span class="badge ${badgeClass}"><span class="pulse-dot"></span> ${bus.status}</span></td>
-        <td style="font-size: 11px; color: var(--text-muted);">${new Date(bus.lastUpdated).toLocaleTimeString()}</td>
+        <td><strong>${bus.etaMinutes || 10} min</strong> ${bus.delayMinutes > 0 ? `<span style="color: var(--status-delayed); font-size: 11px;">(+${bus.delayMinutes}m delay)</span>` : ''}</td>
+        <td><span class="badge ${badgeClass}"><span class="pulse-dot"></span> ${bus.status || 'READY'}</span></td>
+        <td style="font-size: 11px; color: var(--text-muted);">${bus.lastUpdated ? new Date(bus.lastUpdated).toLocaleTimeString() : '--'}</td>
       </tr>
     `;
   }).join('');
@@ -149,7 +141,7 @@ function renderAlerts(alertsList) {
   if (alertsList.length === 0) {
     alertFeed.innerHTML = `
       <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 40px;">
-        No critical anomalies detected.<br>All active trips complying with schedule.
+        No critical anomalies detected.<br>All active trips complying with corridor schedule.
       </div>
     `;
     return;
@@ -164,32 +156,13 @@ function renderAlerts(alertsList) {
   `).join('');
 }
 
-function startSimulation() {
-  fetch('/api/simulation/start', { method: 'POST' })
-    .then(res => res.json())
-    .then(() => {
-      const btn = document.getElementById('btnStartSim');
-      if (btn) btn.innerText = 'Simulation Running...';
-    });
-}
-
-function resetSimulation() {
-  fetch('/api/simulation/reset', { method: 'POST' })
-    .then(res => res.json())
-    .then(() => {
-      const btn = document.getElementById('btnStartSim');
-      if (btn) btn.innerText = 'Start Simulation';
-    });
-}
-
 const socket = (typeof io !== 'undefined') ? io() : null;
 
 if (socket) {
   socket.on('fleet_init', (data) => {
     fleetData = data.buses;
     routesData = data.routes;
-    loadOwnerBuses();
-    if (adminTransitMap) {
+    if (adminTransitMap && routesData) {
       adminTransitMap.drawAllRoutes(routesData);
     }
     renderFleet();
@@ -198,13 +171,8 @@ if (socket) {
 
   socket.on('fleet_update', (data) => {
     fleetData = data.buses;
-    loadOwnerBuses();
     renderFleet();
     renderAlerts(data.alerts || []);
-    const btn = document.getElementById('btnStartSim');
-    if (btn && !data.isSimulating) {
-      btn.innerText = 'Start Simulation';
-    }
   });
 }
 
@@ -215,7 +183,6 @@ window.addEventListener('DOMContentLoaded', () => {
     .then(res => res.json())
     .then(data => {
       fleetData = data.buses;
-      loadOwnerBuses();
       return fetch('/api/routes');
     })
     .then(res => res.json())
