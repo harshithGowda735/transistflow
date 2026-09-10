@@ -42,7 +42,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Crisp Clean White Header */
+
 .gov-header {
   background: #ffffff;
   color: var(--text-dark);
@@ -122,7 +122,7 @@ body {
   border-color: #cbd5e1;
 }
 
-/* Layout */
+
 .app-container {
   display: flex;
   flex: 1;
@@ -154,7 +154,7 @@ body {
   height: 100%;
 }
 
-/* Route Selector Pill Styling */
+
 .route-selector-card {
   padding: 18px;
   border-bottom: 1px solid var(--border-color);
@@ -225,7 +225,7 @@ body {
   box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
 }
 
-/* Floating Circular Swap Button */
+
 .swap-divider-container {
   position: relative;
   height: 28px;
@@ -268,7 +268,7 @@ body {
   transform: rotate(180deg) scale(1.05);
 }
 
-/* Badges */
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -320,7 +320,7 @@ body {
   100% { transform: scale(0.9); opacity: 1; }
 }
 
-/* Buttons */
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -353,7 +353,7 @@ body {
   background: #f8fafc;
 }
 
-/* Smart Delay & Anomaly Banner */
+
 .alert-banner {
   background: #fffbeb;
   border-left: 4px solid var(--status-delayed);
@@ -389,7 +389,7 @@ body {
   line-height: 1.4;
 }
 
-/* Fallback Option Card */
+
 .fallback-card {
   background: linear-gradient(145deg, #fff7ed 0%, #f0fdf4 100%);
   border: 1px solid #fed7aa;
@@ -421,7 +421,7 @@ body {
   border: 1px solid #fed7aa;
 }
 
-/* Custom Leaflet Pin Styling */
+
 .custom-bus-pin-container {
   display: flex;
   flex-direction: column;
@@ -460,7 +460,7 @@ body {
   100% { transform: scale(0.96); }
 }
 
-/* Autocomplete Dropdown Styles */
+
 .search-wrapper {
   position: relative;
   width: 100%;
@@ -532,7 +532,7 @@ body {
   font-weight: 500;
 }
 
-/* Mobile Driver View Container */
+
 .mobile-view-frame {
   max-width: 420px;
   margin: 20px auto;

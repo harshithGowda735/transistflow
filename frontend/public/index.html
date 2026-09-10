@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Clean White Header -->
+  
   <header class="gov-header">
     <div class="brand-section">
       <div class="brand-icon">TF</div>
@@ -30,14 +30,14 @@
     </div>
   </header>
 
-  <!-- App Body -->
+  
   <div class="app-container">
-    <!-- Sidebar -->
+    
     <aside class="sidebar-panel">
-      <!-- Select Route Component (Search Autocomplete Style) -->
+      
       <div class="route-selector-card">
         
-        <!-- Starting Location Section -->
+        
         <div style="margin-bottom: 12px;">
           <div class="section-label">From (Starting Stop)</div>
           <div class="search-wrapper">
@@ -53,7 +53,7 @@
           </div>
         </div>
 
-        <!-- Circular Swap Button -->
+        
         <div class="swap-divider-container">
           <div class="swap-divider-line"></div>
           <button class="swap-circle-btn" onclick="swapLocations()" title="Swap From and To Locations" aria-label="Swap Locations">
@@ -61,7 +61,7 @@
           </button>
         </div>
 
-        <!-- Destination Section -->
+        
         <div>
           <div class="section-label">To (Destination Stop)</div>
           <div class="search-wrapper">
@@ -78,13 +78,13 @@
         </div>
       </div>
 
-      <!-- Alert Banner Container (Auto-detected) -->
+      
       <div id="alertContainer"></div>
 
-      <!-- Fallback Option Card (Appears automatically on service delay) -->
+      
       <div id="fallbackContainer"></div>
 
-      <!-- Active Bus Live Info Card -->
+      
       <div style="padding: 18px; flex: 1;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
           <div>
@@ -96,7 +96,7 @@
           </div>
         </div>
 
-        <!-- Telemetry Grid -->
+        
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
           <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1.5px solid var(--border-color);">
             <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">ESTIMATED ARRIVAL</div>
@@ -110,29 +110,29 @@
           </div>
         </div>
 
-        <!-- Speed & Telemetry Meta -->
+        
         <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); padding: 10px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 16px;">
           <div>Current Speed: <strong id="speedDisplay" style="color: var(--text-dark);">32 km/h</strong></div>
           <div>Telemetry: <strong style="color: var(--primary-orange);">Live Driver GPS</strong></div>
         </div>
 
-        <!-- Route Stops Timeline -->
+        
         <div>
           <h3 style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.5px;">Upcoming Stops</h3>
           <div id="stopsList" style="display: flex; flex-direction: column; gap: 10px;">
-            <!-- Rendered dynamically -->
+            
           </div>
         </div>
       </div>
     </aside>
 
-    <!-- Leaflet Map Container -->
+    
     <main class="map-view">
       <div id="map"></div>
     </main>
   </div>
 
-  <!-- Scripts -->
+  
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/src/js/map.js"></script>

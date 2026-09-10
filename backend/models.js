@@ -1,8 +1,3 @@
-// backend/models.js - Data Models and Schemas for TransitPulse
-
-/**
- * Predefined Route Corridor Definitions with road path polylines and stops
- */
 const ROUTES = {
   'ROUTE_23A': {
     id: 'ROUTE_23A',
@@ -15,19 +10,18 @@ const ROUTES = {
       { name: 'Vijayanagar TTMC', lat: 12.9698, lng: 77.5358, order: 4 },
       { name: 'Attiguppe', lat: 12.9610, lng: 77.5255, order: 5 }
     ],
-    // Precise road waypoints
     path: [
       [12.9774, 77.5708],
       [12.9730, 77.5720],
       [12.9680, 77.5738],
-      [12.9634, 77.5755], // KR Market
+      [12.9634, 77.5755],
       [12.9610, 77.5670],
-      [12.9592, 77.5562], // Sirsi Circle
+      [12.9592, 77.5562],
       [12.9630, 77.5460],
       [12.9670, 77.5400],
-      [12.9698, 77.5358], // Vijayanagar TTMC
+      [12.9698, 77.5358],
       [12.9650, 77.5300],
-      [12.9610, 77.5255]  // Attiguppe
+      [12.9610, 77.5255]
     ]
   },
   'ROUTE_17B': {
@@ -44,19 +38,16 @@ const ROUTES = {
       [12.3025, 76.6080],
       [12.2990, 76.6140],
       [12.2950, 76.6200],
-      [12.2920, 76.6260], // Kuvempunagar
+      [12.2920, 76.6260],
       [12.2960, 76.6320],
-      [12.3015, 76.6375], // Saraswathipuram
+      [12.3015, 76.6375],
       [12.3050, 76.6450],
       [12.3080, 76.6510],
-      [12.3106, 76.6570]  // Mysuru Stand
+      [12.3106, 76.6570]
     ]
   }
 };
 
-/**
- * Initial Fleet state
- */
 function createInitialFleet() {
   return {
     '23A': {
@@ -65,7 +56,7 @@ function createInitialFleet() {
       routeId: 'ROUTE_23A',
       conductorId: 'COND_01',
       conductorName: 'Ramesh Kumar',
-      status: 'ON TIME', // 'READY' | 'ON TIME' | 'DELAYED' | 'ROUTE_DEVIATION'
+      status: 'ON TIME',
       isTripActive: false,
       currentLocation: { lat: 12.9774, lng: 77.5708 },
       speedKmph: 32,
@@ -100,16 +91,13 @@ function createInitialFleet() {
   };
 }
 
-/**
- * Alert Factory
- */
 function createAlertModel(busNumber, type, message, severity = 'MEDIUM') {
   return {
     id: 'ALT_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
     busNumber,
-    type, // 'DELAY' | 'ROUTE_DEVIATION' | 'SYSTEM'
+    type,
     message,
-    severity, // 'LOW' | 'MEDIUM' | 'HIGH'
+    severity,
     createdAt: new Date().toISOString()
   };
 }

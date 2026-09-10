@@ -42,7 +42,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Crisp Clean White Header */
+
 .gov-header {
   background: #ffffff;
   color: var(--text-dark);
@@ -122,7 +122,7 @@ body {
   border-color: #cbd5e1;
 }
 
-/* Layout */
+
 .app-container {
   display: flex;
   flex: 1;
@@ -154,7 +154,7 @@ body {
   height: 100%;
 }
 
-/* Badges */
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -206,7 +206,7 @@ body {
   100% { transform: scale(0.9); opacity: 1; }
 }
 
-/* Buttons */
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -251,7 +251,7 @@ body {
   background: #b91c1c;
 }
 
-/* Smart Delay & Anomaly Banner */
+
 .alert-banner {
   background: #fffbeb;
   border-left: 4px solid var(--status-delayed);
@@ -291,7 +291,7 @@ body {
   color: #7f1d1d;
 }
 
-/* Fallback Option Card */
+
 .fallback-card {
   background: linear-gradient(145deg, #fff7ed 0%, #f0fdf4 100%);
   border: 1px solid #fed7aa;
@@ -323,7 +323,7 @@ body {
   border: 1px solid #fed7aa;
 }
 
-/* Tables */
+
 .gov-table {
   width: 100%;
   border-collapse: collapse;
@@ -351,7 +351,7 @@ body {
   background: #fff7ed;
 }
 
-/* Map Markers */
+
 .custom-bus-icon {
   background: #ea580c;
   color: white;
@@ -375,7 +375,7 @@ body {
   background: #dc2626;
 }
 
-/* Autocomplete Dropdown Styles */
+
 .search-wrapper {
   position: relative;
   width: 100%;
@@ -447,7 +447,7 @@ body {
   font-weight: 500;
 }
 
-/* Mobile Driver View Container */
+
 .mobile-view-frame {
   max-width: 420px;
   margin: 20px auto;

@@ -1,12 +1,10 @@
-// backend/logic.js - Core Routing, Anomaly Detection & Telemetry Engine
 const { ROUTES, createInitialFleet, createAlertModel } = require('./models');
 
 let buses = createInitialFleet();
 let alerts = [];
 
-// Calculate Haversine distance in KM
 function getDistanceKm(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Earth's radius in km
+  const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
   const a =
@@ -17,7 +15,6 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-// Check minimum distance from point to polyline path (deviation check)
 function checkRouteDeviation(lat, lng, path, thresholdKm = 0.45) {
   let minDistance = Infinity;
   for (let i = 0; i < path.length; i++) {
@@ -27,7 +24,6 @@ function checkRouteDeviation(lat, lng, path, thresholdKm = 0.45) {
   return { isDeviated: minDistance > thresholdKm, distance: minDistance };
 }
 
-// Determine next stop along route
 function findNextStop(currentLat, currentLng, stops) {
   let closestIndex = 0;
   let minDistance = Infinity;
@@ -38,15 +34,10 @@ function findNextStop(currentLat, currentLng, stops) {
       closestIndex = i;
     }
   }
-  // Next upcoming stop
   const nextStopObj = stops[Math.min(closestIndex + 1, stops.length - 1)];
   return nextStopObj ? nextStopObj.name : stops[stops.length - 1].name;
 }
 
-/**
- * Ingest GPS location update (works for live smartphone GPS and simulation)
- * Automatic delay & deviation detection
- */
 function processGPSUpdate(busNumber, lat, lng, speed = 30) {
   const bus = buses[busNumber];
   if (!bus) return null;
@@ -62,7 +53,6 @@ function processGPSUpdate(busNumber, lat, lng, speed = 30) {
   const path = route.path;
   const totalWaypoints = path.length - 1;
 
-  // Find closest waypoint on route to determine progress
   let closestIndex = 0;
   let minDistance = Infinity;
   for (let i = 0; i < path.length; i++) {
@@ -73,25 +63,17 @@ function processGPSUpdate(busNumber, lat, lng, speed = 30) {
     }
   }
 
-  // Calculate actual progress percentage
   bus.actualProgressPct = Math.min(100, Math.round((closestIndex / totalWaypoints) * 100));
-
-  // Determine next stop
   bus.nextStop = findNextStop(lat, lng, route.stops);
 
-  // Remaining distance to route end
   const destWaypoint = path[path.length - 1];
   bus.distanceRemainingKm = parseFloat(getDistanceKm(lat, lng, destWaypoint[0], destWaypoint[1]).toFixed(1));
 
-  // Dynamic ETA based on distance and speed (or nominal 30 km/h)
   const effectiveSpeed = bus.speedKmph > 5 ? bus.speedKmph : 20;
   const calculatedEtaMinutes = Math.max(1, Math.round((bus.distanceRemainingKm / effectiveSpeed) * 60));
 
-  // Check route deviation
   const deviation = checkRouteDeviation(lat, lng, path);
   
-  // Rule-based Delay Detection:
-  // Compare expected progress vs actual progress
   const progressDifference = bus.expectedProgressPct - bus.actualProgressPct;
   const delayDelta = bus.expectedProgressPct > 0 ? Math.max(0, Math.round((progressDifference / 100) * 15)) : 0;
 
@@ -115,7 +97,6 @@ function processGPSUpdate(busNumber, lat, lng, speed = 30) {
 }
 
 function recordAlert(busNumber, type, message, severity) {
-  // Avoid duplicate spam alerts within 15 seconds
   const now = Date.now();
   const existing = alerts.find(a => a.busNumber === busNumber && a.type === type && (now - new Date(a.createdAt).getTime()) < 15000);
   if (existing) return existing;
@@ -126,7 +107,6 @@ function recordAlert(busNumber, type, message, severity) {
   return newAlert;
 }
 
-// Simulation Engine state
 let simulationTimer = null;
 let simulationStep = 0;
 let isSimulating = false;
@@ -136,7 +116,6 @@ function startSimulationEngine(broadcastCallback) {
   isSimulating = true;
   simulationStep = 0;
 
-  // Reset bus starting locations
   buses['23A'].simulationIndex = 0;
   buses['23A'].expectedProgressPct = 0;
   buses['23A'].actualProgressPct = 0;
@@ -156,7 +135,6 @@ function startSimulationEngine(broadcastCallback) {
   simulationTimer = setInterval(() => {
     simulationStep++;
 
-    // --- BUS 23A: Steady, on-time progression ---
     const path23A = ROUTES['ROUTE_23A'].path;
     const idx23A = Math.min(simulationStep, path23A.length - 1);
     buses['23A'].simulationIndex = idx23A;
@@ -164,7 +142,6 @@ function startSimulationEngine(broadcastCallback) {
     const pt23A = path23A[idx23A];
     processGPSUpdate('23A', pt23A[0], pt23A[1], 35);
 
-    // --- BUS 17B: Normal initially, then slows down / pauses ---
     const path17B = ROUTES['ROUTE_17B'].path;
     buses['17B'].expectedProgressPct = Math.min(100, Math.round((simulationStep / (path17B.length - 1)) * 100));
 
@@ -174,7 +151,6 @@ function startSimulationEngine(broadcastCallback) {
       idx17B = simulationStep;
       speed17B = 30;
     } else if (simulationStep <= 7) {
-      // Congestion: bus stalls at waypoint 3
       idx17B = 3;
       speed17B = 4;
       buses['17B'].delayMinutes = Math.min(8, (simulationStep - 3) * 2);

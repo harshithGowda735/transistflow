@@ -1,4 +1,3 @@
-// server.js - Express & Socket.IO Backend for TransitPulse / Namma Raste
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -25,12 +24,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Broadcast helper for Socket.IO clients
 function broadcastFleetUpdate(payload) {
   io.emit('fleet_update', payload);
 }
 
-// REST Endpoints
 app.get('/api/buses', (req, res) => {
   res.json({ success: true, buses, isSimulating: isSimulating() });
 });
@@ -43,7 +40,6 @@ app.get('/api/alerts', (req, res) => {
   res.json({ success: true, alerts });
 });
 
-// Conductor GPS Ingestion Endpoint (Real Smartphone GPS Stream)
 app.post('/api/gps', (req, res) => {
   const { busNumber, lat, lng, speed, conductorId } = req.body;
   if (!busNumber || lat === undefined || lng === undefined) {
@@ -55,7 +51,6 @@ app.post('/api/gps', (req, res) => {
     return res.status(404).json({ error: `Bus ${busNumber} not found` });
   }
 
-  // Security & Session Check: Only active trip with assigned conductor can transmit GPS
   if (conductorId && bus.conductorId !== conductorId) {
     return res.status(403).json({ error: 'Unauthorized conductor for this bus' });
   }
@@ -72,7 +67,6 @@ app.post('/api/gps', (req, res) => {
   res.json({ success: true, bus: result.bus });
 });
 
-// Conductor Trip Control
 app.post('/api/trip/start', (req, res) => {
   const { busNumber, conductorId } = req.body;
   const bus = buses[busNumber];
@@ -99,7 +93,6 @@ app.post('/api/trip/end', (req, res) => {
   res.json({ success: true, message: `Trip ended for Bus ${busNumber}`, bus });
 });
 
-// Master Simulation Controls
 app.post('/api/simulation/start', (req, res) => {
   startSimulationEngine(broadcastFleetUpdate);
   res.json({ success: true, message: 'Simulation started' });
@@ -110,9 +103,7 @@ app.post('/api/simulation/reset', (req, res) => {
   res.json({ success: true, message: 'Simulation reset' });
 });
 
-// Socket.IO Real-time streaming
 io.on('connection', (socket) => {
-  // Send current snapshot immediately on connection
   socket.emit('fleet_init', {
     buses,
     routes: ROUTES,
@@ -120,7 +111,6 @@ io.on('connection', (socket) => {
     isSimulating: isSimulating()
   });
 
-  // Allow conductor to push GPS directly over WebSockets
   socket.on('conductor_gps', (data) => {
     const { busNumber, lat, lng, speed } = data;
     if (busNumber && lat && lng) {
