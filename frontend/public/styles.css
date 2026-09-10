@@ -1,9 +1,9 @@
-/* frontend/public/styles.css - Namma Rasthe Modern Design System */
+/* frontend/public/styles.css - Namma Rasthe Crisp White & KSRTC Theme */
 :root {
   --primary-navy: #0f172a;
   --primary-orange: #ea580c;
   --primary-orange-light: #fff7ed;
-  --border-black: #0f172a;
+  --primary-blue: #2563eb;
   --bg-main: #ffffff;
   --bg-subtle: #f8fafc;
   --surface: #ffffff;
@@ -11,11 +11,11 @@
   --text-dark: #0f172a;
   --text-muted: #64748b;
   --status-ontime: #10b981;
-  --status-delayed: #ea580c;
+  --status-delayed: #f59e0b;
   --status-deviation: #ef4444;
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-pill: 9999px;
+  --radius-lg: 16px;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -127,7 +127,7 @@ body {
 }
 
 .sidebar-panel {
-  width: 420px;
+  width: 400px;
   background: #ffffff;
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -147,120 +147,6 @@ body {
 #map, #adminMap {
   width: 100%;
   height: 100%;
-}
-
-/* Route Selector Pill Styling */
-.route-selector-card {
-  padding: 18px;
-  border-bottom: 1px solid var(--border-color);
-  background: #ffffff;
-  position: relative;
-}
-
-.section-label {
-  font-size: 11px;
-  font-weight: 800;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin-bottom: 8px;
-}
-
-.pill-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.pill-chip {
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 700;
-  border-radius: var(--radius-pill);
-  border: 2px solid var(--border-black);
-  background: #ffffff;
-  color: #0f172a;
-  cursor: pointer;
-  transition: all 0.18s ease-in-out;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  user-select: none;
-}
-
-.pill-chip:hover {
-  background: #f8fafc;
-  transform: translateY(-1px);
-}
-
-.pill-chip.active {
-  background: var(--primary-orange);
-  color: #ffffff;
-  border-color: var(--border-black);
-  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.35);
-}
-
-.pill-input {
-  width: 100%;
-  padding: 10px 18px;
-  border-radius: var(--radius-pill);
-  border: 2px solid var(--border-black);
-  font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
-  outline: none;
-  font-family: inherit;
-  transition: border-color 0.2s;
-  background: #ffffff;
-}
-
-.pill-input:focus {
-  border-color: var(--primary-orange);
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
-}
-
-/* Floating Circular Swap Button */
-.swap-divider-container {
-  position: relative;
-  height: 28px;
-  margin: 6px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.swap-divider-line {
-  position: absolute;
-  width: 100%;
-  height: 1px;
-  background: var(--border-color);
-  z-index: 1;
-}
-
-.swap-circle-btn {
-  position: relative;
-  z-index: 2;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 2px solid var(--border-black);
-  background: #ffffff;
-  color: #0f172a;
-  font-size: 16px;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  transition: all 0.2s ease;
-}
-
-.swap-circle-btn:hover {
-  background: var(--primary-orange);
-  color: #ffffff;
-  transform: rotate(180deg) scale(1.05);
 }
 
 /* Badges */
@@ -322,10 +208,10 @@ body {
   justify-content: center;
   padding: 8px 14px;
   font-size: 13px;
-  font-weight: 700;
-  border-radius: var(--radius-pill);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  border: 2px solid var(--border-black);
+  border: none;
   transition: all 0.2s ease;
   font-family: inherit;
 }
@@ -333,6 +219,7 @@ body {
 .btn-primary {
   background: var(--primary-orange);
   color: white;
+  box-shadow: 0 2px 4px rgba(234, 88, 12, 0.25);
 }
 
 .btn-primary:hover {
@@ -341,11 +228,22 @@ body {
 
 .btn-outline {
   background: white;
+  border: 1px solid var(--border-color);
   color: var(--text-dark);
 }
 
 .btn-outline:hover {
   background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.btn-danger {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
 }
 
 /* Smart Delay & Anomaly Banner */
@@ -384,6 +282,10 @@ body {
   line-height: 1.4;
 }
 
+.alert-banner.critical .alert-msg {
+  color: #7f1d1d;
+}
+
 /* Fallback Option Card */
 .fallback-card {
   background: linear-gradient(145deg, #fff7ed 0%, #f0fdf4 100%);
@@ -416,43 +318,56 @@ body {
   border: 1px solid #fed7aa;
 }
 
-/* Custom Leaflet Pin Styling */
-.custom-bus-pin-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transform: translate(0, 0);
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25));
+/* Tables */
+.gov-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
 }
 
-.pin-badge {
-  background: #0f172a;
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 900;
-  padding: 2px 6px;
-  border-radius: 9999px;
-  border: 1.5px solid #ffffff;
-  white-space: nowrap;
-  margin-bottom: -4px;
-  z-index: 10;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+.gov-table th {
+  background: #f8fafc;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.custom-bus-pin-container.delayed .pin-badge {
+.gov-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-dark);
+}
+
+.gov-table tr:hover {
+  background: #fff7ed;
+}
+
+/* Map Markers */
+.custom-bus-icon {
   background: #ea580c;
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 2px solid white;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.pin-icon-img {
-  width: 48px;
-  height: 48px;
-  animation: radarWave 2s infinite ease-out;
+.custom-bus-icon.delayed {
+  background: #d97706;
 }
 
-@keyframes radarWave {
-  0% { transform: scale(0.96); }
-  50% { transform: scale(1.04); }
-  100% { transform: scale(0.96); }
+.custom-bus-icon.deviated {
+  background: #dc2626;
 }
 
 @keyframes slideIn {

@@ -3,15 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Namma Rasthe - Live Bus Tracking</title>
+  <title>Namma Rasthe - Live Passenger Bus Tracking</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/src/styles/main.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Header -->
+  <!-- Clean White Header -->
   <header class="gov-header">
     <div class="brand-section">
       <img src="https://imgs.search.brave.com/9p3QnHjbGW3W902xwA0bHh3m9G2dzqGcLRG7AFgNMxc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly91cGxv/YWQud2lraW1lZGlh/Lm9yZy93aWtpcGVk/aWEvY29tbW9ucy85/LzkzL0thcm5hdGFr/YV9TdGF0ZV9Sb2Fk/X1RyYW5zcG9ydF9D/b3Jwb3JhdGlvbl8o/S1NSVEMpX2xvZ28u/cG5nP189MjAyNDA1/MDcwOTUyNTg" 
@@ -22,7 +23,7 @@
           <span class="brand-title">Namma Rasthe</span>
           <span class="brand-kannada">ನಮ್ಮ ರಸ್ತೆ</span>
         </div>
-        <div class="gov-subtext">Government of Karnataka • KSRTC Mobility</div>
+        <div class="gov-subtext">KSRTC • Government of Karnataka Public Mobility</div>
       </div>
     </div>
     <div class="header-links">
@@ -132,7 +133,7 @@
         <!-- Speed & Telemetry Meta -->
         <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); padding: 10px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 16px;">
           <div>Current Speed: <strong id="speedDisplay" style="color: var(--text-dark);">32 km/h</strong></div>
-          <div>Telemetry: <strong style="color: #ea580c;">Live Driver GPS</strong></div>
+          <div>Telemetry: <strong style="color: var(--primary-orange);">Live Driver GPS</strong></div>
         </div>
 
         <!-- Route Stops Timeline -->

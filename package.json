@@ -2,10 +2,13 @@
   "name": "namma-raste-transitpulse",
   "version": "1.0.0",
   "description": "Zero-hardware real-time bus tracking and automatic delay detection platform",
-  "main": "server.js",
+  "main": "backend/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "backend": "node backend/server.js",
+    "frontend": "npx serve frontend/public",
+    "driver": "npx serve driver-app/public"
   },
   "dependencies": {
     "cors": "^2.8.5",

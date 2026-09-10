@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Namma Rasthe - Driver Telemetry Terminal</title>
+  <link rel="stylesheet" href="/driver/styles.css">
+  <link rel="stylesheet" href="/driver/src/styles/driver.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header class="driver-header" style="background: #ffffff; border-bottom: 3px solid #ea580c; color: #0f172a;">
+    <div class="driver-brand">
+      <img src="https://imgs.search.brave.com/9p3QnHjbGW3W902xwA0bHh3m9G2dzqGcLRG7AFgNMxc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly91cGxv/YWQud2lraW1lZGlh/Lm9yZy93aWtpcGVk/aWEvY29tbW9ucy85/LzkzL0thcm5hdGFr/YV9TdGF0ZV9Sb2Fk/X1RyYW5zcG9ydF9D/b3Jwb3JhdGlvbl8o/S1NSVEMpX2xvZ28u/cG5nP189MjAyNDA1/MDcwOTUyNTg" 
+           alt="KSRTC Logo" 
+           style="width: 36px; height: 36px; object-fit: contain; border-radius: 50%;" />
+      <div>
+        <div class="driver-title" style="color: #0f172a;">Namma Rasthe Driver</div>
+        <div style="font-size: 11px; color: #ea580c; font-weight: 700;">ನಮ್ಮ ರಸ್ತೆ ಚಾಲಕರ ಮೊಬೈಲ್ ಟರ್ಮಿನಲ್</div>
+      </div>
+    </div>
+    <div id="tripBadge" class="status-indicator status-ready">STANDBY</div>
+  </header>
+
+  <div class="driver-container">
+    <!-- Driver Info Card -->
+    <div class="terminal-card">
+      <div class="card-header">
+        <div>
+          <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Driver / Conductor Profile</div>
+          <div id="conductorName" style="font-size: 17px; font-weight: 800; color: #fff; margin-top: 2px;">Ramesh Kumar</div>
+        </div>
+        <span style="font-size: 11px; background: rgba(234, 88, 12, 0.2); color: #fb923c; padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(234, 88, 12, 0.4); font-weight: 700;">
+          KSRTC Telemetry Link
+        </span>
+      </div>
+
+      <!-- Bus Assignment Selector -->
+      <div class="form-group">
+        <label class="form-label" for="busSelect">Assigned Vehicle & Corridor</label>
+        <select id="busSelect" class="form-select" onchange="onBusSelectChange()">
+          <option value="23A">Bus 23A (KA-01-F-2301) — Majestic → Vijayanagar</option>
+          <option value="17B">Bus 17B (KA-09-F-1702) — Bogadi → Mysuru Stand</option>
+        </select>
+      </div>
+
+      <!-- Real-time HUD Telemetry -->
+      <div class="telemetry-grid">
+        <div class="telemetry-box">
+          <div class="telemetry-label">Latitude</div>
+          <div id="valLat" class="telemetry-val">12.9774</div>
+        </div>
+        <div class="telemetry-box">
+          <div class="telemetry-label">Longitude</div>
+          <div id="valLng" class="telemetry-val">77.5708</div>
+        </div>
+        <div class="telemetry-box">
+          <div class="telemetry-label">Live Speed</div>
+          <div id="valSpeed" class="telemetry-val" style="color: #60a5fa;">0 km/h</div>
+        </div>
+        <div class="telemetry-box">
+          <div class="telemetry-label">Last GPS Ping</div>
+          <div id="valLastPing" class="telemetry-val" style="font-size: 14px; margin-top: 8px;">Waiting...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Master Action Toggle Button -->
+    <button id="btnTripToggle" class="btn-large btn-start" onclick="toggleTrip()">
+      ▶ START TRIP TRANSMISSION
+    </button>
+
+    <div class="hud-notice">
+      This dedicated driver app continuously streams your bus coordinates directly to passenger smartphones and control room displays.
+    </div>
+  </div>
+
+  <!-- Socket.IO & Logic Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/driver/src/js/driver.js"></script>
+</body>
+</html>
