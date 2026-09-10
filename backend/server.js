@@ -33,7 +33,6 @@ const frontendPublicPath = path.join(__dirname, '..', 'frontend', 'public');
 const frontendSrcPath = path.join(__dirname, '..', 'frontend', 'src');
 const driverPublicPath = path.join(__dirname, '..', 'driver-app', 'public');
 const driverSrcPath = path.join(__dirname, '..', 'driver-app', 'src');
-const rootPublicPath = path.join(__dirname, '..', 'public');
 
 app.use(express.static(frontendPublicPath));
 app.use('/src', express.static(frontendSrcPath));
@@ -50,8 +49,6 @@ app.get('/main.css', (req, res) => {
 app.get('/driver/driver.css', (req, res) => {
   res.sendFile(path.join(driverSrcPath, 'styles', 'driver.css'));
 });
-
-app.use(express.static(rootPublicPath));
 
 function broadcastFleetUpdate(payload) {
   io.emit('fleet_update', payload);
