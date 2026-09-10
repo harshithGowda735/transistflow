@@ -30,25 +30,10 @@ app.use(cors());
 app.use(express.json());
 
 const frontendPublicPath = path.join(__dirname, '..', 'frontend', 'public');
-const frontendSrcPath = path.join(__dirname, '..', 'frontend', 'src');
 const driverPublicPath = path.join(__dirname, '..', 'driver-app', 'public');
-const driverSrcPath = path.join(__dirname, '..', 'driver-app', 'src');
 
 app.use(express.static(frontendPublicPath));
-app.use('/src', express.static(frontendSrcPath));
-
 app.use('/driver', express.static(driverPublicPath));
-app.use('/driver/src', express.static(driverSrcPath));
-
-app.get('/styles.css', (req, res) => {
-  res.sendFile(path.join(frontendSrcPath, 'styles', 'main.css'));
-});
-app.get('/main.css', (req, res) => {
-  res.sendFile(path.join(frontendSrcPath, 'styles', 'main.css'));
-});
-app.get('/driver/driver.css', (req, res) => {
-  res.sendFile(path.join(driverSrcPath, 'styles', 'driver.css'));
-});
 
 function broadcastFleetUpdate(payload) {
   io.emit('fleet_update', payload);

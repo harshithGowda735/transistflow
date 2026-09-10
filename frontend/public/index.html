@@ -6,7 +6,7 @@
   <title>TransitFlow - Live Passenger Bus Tracking</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="/styles.css">
-  <link rel="stylesheet" href="/src/styles/main.css">
+  <link rel="stylesheet" href="/styles/main.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -37,18 +37,10 @@
       
       <div class="route-selector-card">
         
-        
-        <div style="margin-bottom: 12px;">
-          <div class="section-label">From (Starting Stop)</div>
+        <div style="margin-bottom: 14px;">
+          <div class="section-label">Origin Stop</div>
           <div class="search-wrapper">
-            <input type="text" 
-                   id="inputOrigin" 
-                   class="search-input" 
-                   placeholder="Search starting location (e.g. Majestic)..." 
-                   value="Majestic"
-                   autocomplete="off"
-                   onfocus="showOriginDropdown()"
-                   oninput="onOriginSearchInput(this.value)" />
+            <input type="text" id="inputOrigin" class="search-input" value="Majestic" placeholder="Search boarding stop..." onfocus="showOriginDropdown()" oninput="onOriginSearchInput(this.value)" autocomplete="off" />
             <div id="originDropdown" class="autocomplete-dropdown"></div>
           </div>
         </div>
@@ -56,23 +48,14 @@
         
         <div class="swap-divider-container">
           <div class="swap-divider-line"></div>
-          <button class="swap-circle-btn" onclick="swapLocations()" title="Swap From and To Locations" aria-label="Swap Locations">
-            &updownarrow;
-          </button>
+          <button class="swap-circle-btn" onclick="swapLocations()" title="Reverse Route">⇅</button>
         </div>
 
         
-        <div>
-          <div class="section-label">To (Destination Stop)</div>
+        <div style="margin-top: 14px; margin-bottom: 6px;">
+          <div class="section-label">Destination Stop</div>
           <div class="search-wrapper">
-            <input type="text" 
-                   id="inputDest" 
-                   class="search-input" 
-                   placeholder="Search destination (e.g. Vijayanagar)..." 
-                   value="Vijayanagar"
-                   autocomplete="off"
-                   onfocus="showDestDropdown()"
-                   oninput="onDestSearchInput(this.value)" />
+            <input type="text" id="inputDest" class="search-input" value="Vijayanagar" placeholder="Search destination stop..." onfocus="showDestDropdown()" oninput="onDestSearchInput(this.value)" autocomplete="off" />
             <div id="destDropdown" class="autocomplete-dropdown"></div>
           </div>
         </div>
@@ -85,35 +68,36 @@
       <div id="fallbackContainer"></div>
 
       
-      <div style="padding: 18px; flex: 1;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-          <div>
-            <h2 id="busTitle" style="font-size: 20px; font-weight: 800; color: var(--primary-navy);">Bus 23A</h2>
-            <div id="routeSubtitle" style="font-size: 13px; color: var(--text-muted); font-weight: 500;">Majestic → Vijayanagar</div>
+      <div style="padding: 16px;">
+        <div style="background: var(--bg-subtle); border-radius: var(--radius-md); padding: 14px; border: 1px solid var(--border-color); margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+            <div>
+              <div id="busTitle" style="font-size: 16px; font-weight: 800; color: var(--primary-navy);">Bus 23A</div>
+              <div id="routeSubtitle" style="font-size: 11px; color: var(--text-muted);">Majestic to Vijayanagar</div>
+            </div>
+            <span id="statusBadge" class="badge badge-ontime">
+              <span class="pulse-dot"></span>
+              <span id="statusText">ON TIME</span>
+            </span>
           </div>
-          <div id="statusBadge" class="badge badge-ontime">
-            <span class="pulse-dot"></span> <span id="statusText">ON TIME</span>
-          </div>
-        </div>
 
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
-          <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1.5px solid var(--border-color);">
-            <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">ESTIMATED ARRIVAL</div>
-            <div id="etaDisplay" style="font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 2px;">8 min</div>
-            <div id="delayDeltaText" style="font-size: 11px; color: var(--status-delayed); font-weight: 700;">Normal Schedule</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+            <div>
+              <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Estimated Arrival</div>
+              <div id="etaDisplay" style="font-size: 20px; font-weight: 900; color: var(--primary-orange);">8 min</div>
+              <div id="delayDeltaText" style="font-size: 10px; color: var(--status-ontime); font-weight: 600;">Normal Schedule</div>
+            </div>
+            <div>
+              <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Next Upcoming Stop</div>
+              <div id="nextStopDisplay" style="font-size: 13px; font-weight: 700; color: var(--primary-navy); margin-top: 4px;">KR Market</div>
+              <div id="distanceDisplay" style="font-size: 10px; color: var(--text-muted);">6.2 km remaining</div>
+            </div>
           </div>
-          <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1.5px solid var(--border-color);">
-            <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">NEXT STOP</div>
-            <div id="nextStopDisplay" style="font-size: 14px; font-weight: 700; color: var(--text-dark); margin-top: 4px;">KR Market</div>
-            <div id="distanceDisplay" style="font-size: 11px; color: var(--text-muted);">1.8 km remaining</div>
-          </div>
-        </div>
 
-        
-        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); padding: 10px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 16px;">
-          <div>Current Speed: <strong id="speedDisplay" style="color: var(--text-dark);">32 km/h</strong></div>
-          <div>Telemetry: <strong style="color: var(--primary-orange);">Live Driver GPS</strong></div>
+          <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
+            <span>Vehicle Speed:</span>
+            <strong id="speedDisplay" style="color: var(--primary-navy);">32 km/h</strong>
+          </div>
         </div>
 
         
@@ -135,7 +119,7 @@
   
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/src/js/map.js"></script>
-  <script src="/src/js/commuter.js"></script>
+  <script src="/js/map.js"></script>
+  <script src="/js/commuter.js"></script>
 </body>
 </html>

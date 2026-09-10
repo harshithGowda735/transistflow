@@ -42,7 +42,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-
 .gov-header {
   background: #ffffff;
   color: var(--text-dark);
@@ -122,7 +121,6 @@ body {
   border-color: #cbd5e1;
 }
 
-
 .app-container {
   display: flex;
   flex: 1;
@@ -153,7 +151,6 @@ body {
   width: 100%;
   height: 100%;
 }
-
 
 .route-selector-card {
   padding: 18px;
@@ -225,7 +222,6 @@ body {
   box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
 }
 
-
 .swap-divider-container {
   position: relative;
   height: 28px;
@@ -267,7 +263,6 @@ body {
   color: #ffffff;
   transform: rotate(180deg) scale(1.05);
 }
-
 
 .badge {
   display: inline-flex;
@@ -320,7 +315,6 @@ body {
   100% { transform: scale(0.9); opacity: 1; }
 }
 
-
 .btn {
   display: inline-flex;
   align-items: center;
@@ -352,7 +346,6 @@ body {
 .btn-outline:hover {
   background: #f8fafc;
 }
-
 
 .alert-banner {
   background: #fffbeb;
@@ -389,7 +382,6 @@ body {
   line-height: 1.4;
 }
 
-
 .fallback-card {
   background: linear-gradient(145deg, #fff7ed 0%, #f0fdf4 100%);
   border: 1px solid #fed7aa;
@@ -420,7 +412,6 @@ body {
   margin-top: 8px;
   border: 1px solid #fed7aa;
 }
-
 
 .custom-bus-pin-container {
   display: flex;
@@ -459,7 +450,6 @@ body {
   50% { transform: scale(1.04); }
   100% { transform: scale(0.96); }
 }
-
 
 .search-wrapper {
   position: relative;
@@ -531,7 +521,6 @@ body {
   color: var(--text-muted);
   font-weight: 500;
 }
-
 
 .mobile-view-frame {
   max-width: 420px;
