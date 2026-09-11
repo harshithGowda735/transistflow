@@ -216,13 +216,55 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
 }
 
 function checkRouteDeviation(lat, lng, path, thresholdKm = 0.45) {
-  if (!path || path.length === 0) return { isDeviated: false, distance: 0 };
-  let minDistance = Infinity;
-  for (let i = 0; i < path.length; i++) {
-    const d = getDistanceKm(lat, lng, path[i][0], path[i][1]);
-    if (d < minDistance) minDistance = d;
+  if (!path || path.length < 2) {
+    return { isDeviated: false, distance: 0 };
   }
-  return { isDeviated: minDistance > thresholdKm, distance: minDistance };
+
+  let minDistance = Infinity;
+
+  for (let i = 0; i < path.length - 1; i++) {
+    const p1 = path[i];
+    const p2 = path[i + 1];
+
+    const x1 = p1[1];
+    const y1 = p1[0];
+    const x2 = p2[1];
+    const y2 = p2[0];
+
+    const x = lng;
+    const y = lat;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+
+    const lengthSquared = dx * dx + dy * dy;
+
+    let t = 0;
+
+    if (lengthSquared !== 0) {
+      t = ((x - x1) * dx + (y - y1) * dy) / lengthSquared;
+      t = Math.max(0, Math.min(1, t));
+    }
+
+    const closestLng = x1 + t * dx;
+    const closestLat = y1 + t * dy;
+
+    const distance = getDistanceKm(
+      lat,
+      lng,
+      closestLat,
+      closestLng
+    );
+
+    if (distance < minDistance) {
+      minDistance = distance;
+    }
+  }
+
+  return {
+    isDeviated: minDistance > thresholdKm,
+    distance: minDistance
+  };
 }
 
 function findNextStop(currentLat, currentLng, stops) {
@@ -410,22 +452,45 @@ async function processGPSUpdate(busNumber, lat, lng, speed = 30) {
 
     const deviation = checkRouteDeviation(parsedLat, parsedLng, path);
 
-    if (deviation.isDeviated) {
-      bus.status = 'ROUTE_DEVIATION';
-      const alertMsg = `Bus ${bus.busNumber} has deviated from assigned route (${(deviation.distance * 1000).toFixed(0)}m away).`;
-      recordAlert(bus.busNumber, 'ROUTE_DEVIATION', alertMsg, 'HIGH');
-    } else if (bus.speedKmph < 5 && bus.isTripActive) {
-      bus.status = 'DELAYED';
-      bus.delayMinutes = Math.max(bus.delayMinutes || 0, 5);
-      bus.etaMinutes = calculatedEtaMinutes + bus.delayMinutes;
-      const alertMsg = `Bus ${bus.busNumber} is moving slowly / delayed (+${bus.delayMinutes} min).`;
-      recordAlert(bus.busNumber, 'DELAY', alertMsg, 'MEDIUM');
-    } else {
-      bus.status = 'ON TIME';
-      bus.delayMinutes = 0;
-      bus.etaMinutes = calculatedEtaMinutes;
-    }
-  }
+  if (bus.speedKmph < 5 && bus.isTripActive) {
+
+
+  bus.status = 'DELAYED';
+  bus.delayMinutes = Math.max(bus.delayMinutes || 0, 5);
+  bus.etaMinutes = calculatedEtaMinutes + bus.delayMinutes;
+
+  const alertMsg =
+    `Bus ${bus.busNumber} is moving slowly / delayed (+${bus.delayMinutes} min).`;
+
+  recordAlert(
+    bus.busNumber,
+    'DELAY',
+    alertMsg,
+    'MEDIUM'
+  );
+
+} else if (deviation.isDeviated) {
+
+
+  bus.status = 'ROUTE_DEVIATION';
+
+  const alertMsg =
+    `Bus ${bus.busNumber} has deviated from assigned route (${(deviation.distance * 1000).toFixed(0)}m away).`;
+
+  recordAlert(
+    bus.busNumber,
+    'ROUTE_DEVIATION',
+    alertMsg,
+    'HIGH'
+  );
+
+} else {
+
+  bus.status = 'ON TIME';
+  bus.delayMinutes = 0;
+  bus.etaMinutes = calculatedEtaMinutes;
+
+}
 
   inMemoryBuses[busNumber] = bus;
   return { bus, route };
