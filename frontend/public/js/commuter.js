@@ -122,12 +122,36 @@ function swapLocations() {
 }
 
 function resolveRouteMatch() {
-  const o = currentOrigin.toLowerCase();
-  const d = currentDestination.toLowerCase();
+  const o = currentOrigin.toLowerCase().trim();
+  const d = currentDestination.toLowerCase().trim();
 
-  let matchedRouteId = 'ROUTE_23A';
-  if (o.includes('bogadi') || d.includes('mysuru') || o.includes('mysuru') || d.includes('bogadi') || o.includes('kuvempu') || d.includes('kuvempu')) {
-    matchedRouteId = 'ROUTE_17B';
+  let matchedRouteId = null;
+  const routesList = Object.values(routesData);
+
+  for (const route of routesList) {
+    const stops = route.stops || [];
+    const hasOrigin = stops.some(s => s.name && s.name.toLowerCase().includes(o));
+    const hasDest = stops.some(s => s.name && s.name.toLowerCase().includes(d));
+
+    if (hasOrigin && hasDest) {
+      matchedRouteId = route.routeId;
+      break;
+    }
+  }
+
+  if (!matchedRouteId) {
+    for (const route of routesList) {
+      const stops = route.stops || [];
+      const hasAny = stops.some(s => s.name && (s.name.toLowerCase().includes(o) || s.name.toLowerCase().includes(d)));
+      if (hasAny) {
+        matchedRouteId = route.routeId;
+        break;
+      }
+    }
+  }
+
+  if (!matchedRouteId && routesList.length > 0) {
+    matchedRouteId = routesList[0].routeId;
   }
 
   const matchingBus = Object.values(fleetData).find(b => b.routeId === matchedRouteId);
@@ -298,5 +322,5 @@ window.addEventListener('DOMContentLoaded', () => {
       updateKnownStopsFromRoutes();
       renderView();
     })
-    .catch(err => console.warn(err));
+    .catch(() => {});
 });

@@ -156,6 +156,14 @@ function renderAlerts(alertsList) {
   `).join('');
 }
 
+function populateRouteSelect(routes) {
+  const select = document.getElementById('newRouteSelect');
+  if (!select) return;
+  const list = Object.values(routes || {});
+  if (list.length === 0) return;
+  select.innerHTML = list.map(r => `<option value="${r.routeId}">${r.name || r.routeId} ${r.city ? `(${r.city})` : ''}</option>`).join('');
+}
+
 const socket = (typeof io !== 'undefined') ? io() : null;
 
 if (socket) {
@@ -165,6 +173,7 @@ if (socket) {
     if (adminTransitMap && routesData) {
       adminTransitMap.drawAllRoutes(routesData);
     }
+    populateRouteSelect(routesData);
     renderFleet();
     renderAlerts(data.alerts || []);
   });
@@ -191,6 +200,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (adminTransitMap) {
         adminTransitMap.drawAllRoutes(routesData);
       }
+      populateRouteSelect(routesData);
       renderFleet();
       return fetch('/api/alerts');
     })
@@ -198,5 +208,5 @@ window.addEventListener('DOMContentLoaded', () => {
     .then(data => {
       renderAlerts(data.alerts || []);
     })
-    .catch(err => console.warn(err));
+    .catch(() => {});
 });

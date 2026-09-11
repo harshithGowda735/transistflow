@@ -11,7 +11,6 @@ class TransitMap {
     this.routeLayers = [];
     this.userLocationMarker = null;
     this.destMarker = null;
-    this.cachedRoadPaths = {};
   }
 
   setUserLocation(lat, lng) {
@@ -40,15 +39,11 @@ class TransitMap {
   async fetchRoadPath(stops) {
     if (!stops || stops.length < 2) return null;
     const coordsParam = stops.map(s => `${s.lng},${s.lat}`).join(';');
-    if (this.cachedRoadPaths[coordsParam]) {
-      return this.cachedRoadPaths[coordsParam];
-    }
 
     try {
       const res = await fetch(`/api/route/osrm?coords=${encodeURIComponent(coordsParam)}`);
       const data = await res.json();
       if (data.success && data.path && data.path.length > 0) {
-        this.cachedRoadPaths[coordsParam] = data.path;
         return data.path;
       }
     } catch (e) {}
@@ -58,9 +53,7 @@ class TransitMap {
       const directRes = await fetch(directUrl);
       const directData = await directRes.json();
       if (directData.code === 'Ok' && directData.routes && directData.routes[0]) {
-        const roadCoords = directData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-        this.cachedRoadPaths[coordsParam] = roadCoords;
-        return roadCoords;
+        return directData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
       }
     } catch (e) {}
 

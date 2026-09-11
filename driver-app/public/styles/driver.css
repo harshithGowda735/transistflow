@@ -255,3 +255,11 @@ body {
   border: 1px solid #fed7aa;
   cursor: pointer;
 }
+
+.brand-logo-img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+

@@ -608,7 +608,12 @@ body {
     width: 100%;
     height: 50vh;
   }
-  .map-view {
-    height: 50vh;
-  }
 }
+
+.brand-logo-img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+

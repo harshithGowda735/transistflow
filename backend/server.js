@@ -10,6 +10,7 @@ const {
   getAllRoutes,
   getAlerts,
   registerNewBus,
+  registerNewRoute,
   processGPSUpdate,
   setTripStatus,
   syncInitialData
@@ -82,6 +83,29 @@ app.get('/api/routes', async (req, res) => {
     res.json({ success: true, routes });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/routes/:routeId', async (req, res) => {
+  try {
+    const routes = await getAllRoutes();
+    const route = routes[req.params.routeId];
+    if (!route) {
+      return res.status(404).json({ success: false, error: 'Route not found' });
+    }
+    res.json({ success: true, route });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/routes', async (req, res) => {
+  try {
+    const route = await registerNewRoute(req.body);
+    res.status(201).json({ success: true, route });
+  } catch (err) {
+    const statusCode = err.status || 400;
+    res.status(statusCode).json({ success: false, error: err.message });
   }
 });
 
