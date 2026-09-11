@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TransitFlow - Live Passenger Bus Tracking</title>
+  <title>Sanchar Saathi - Live Passenger Bus Tracking</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/styles/main.css">
@@ -15,15 +15,18 @@
   
   <header class="gov-header">
     <div class="brand-section">
-      <img src="/assets/bus_pin.svg" class="brand-logo-img" alt="Namma Raste" />
+      <img src="/assets/bus_pin.svg" class="brand-logo-img" alt="Sanchar Saathi" />
       <div>
         <div style="display: flex; align-items: baseline; gap: 8px;">
-          <span class="brand-title">TransitFlow</span>
+          <span class="brand-title">Sanchar Saathi</span>
         </div>
         <div class="gov-subtext">Real-Time Bus Tracking & Transit Operations</div>
       </div>
     </div>
     <div class="header-links">
+      <button id="btnDemoSimulate" class="btn" style="background: #ea580c; color: white; padding: 6px 14px; font-size: 12px; font-weight: 800; border-radius: 6px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onclick="toggleDemoMode()">
+        <span>▶</span> Live Demo Mode
+      </button>
       <a href="/index.html" class="nav-link active">Passenger View</a>
       <a href="/admin.html" class="nav-link">Owner Dashboard</a>
       <a href="/driver/index.html" class="nav-link">Driver App</a>
@@ -119,6 +122,7 @@
   
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/simulation.js"></script>
   <script src="/js/map.js"></script>
   <script src="/js/commuter.js"></script>
 </body>

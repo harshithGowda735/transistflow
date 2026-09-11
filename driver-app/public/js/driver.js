@@ -284,7 +284,7 @@ function startTransmission() {
   if (isSimulationMode) {
     if (!tripSimulator && typeof TripSimulator !== 'undefined') {
       tripSimulator = new TripSimulator({
-        intervalMs: 2500,
+        intervalMs: 1200,
         onUpdate: (lat, lng, speed) => {
           sendGPSUpdate(lat, lng, speed);
         }
@@ -307,7 +307,7 @@ function startTransmission() {
       () => {
         if (!tripSimulator && typeof TripSimulator !== 'undefined') {
           tripSimulator = new TripSimulator({
-            intervalMs: 3000,
+            intervalMs: 1200,
             onUpdate: (lat, lng, speed) => {
               sendGPSUpdate(lat, lng, speed);
             }
@@ -320,7 +320,7 @@ function startTransmission() {
   } else {
     if (!tripSimulator && typeof TripSimulator !== 'undefined') {
       tripSimulator = new TripSimulator({
-        intervalMs: 3000,
+        intervalMs: 1200,
         onUpdate: (lat, lng, speed) => {
           sendGPSUpdate(lat, lng, speed);
         }

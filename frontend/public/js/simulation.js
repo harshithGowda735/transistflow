@@ -99,4 +99,3 @@ class TripSimulator {
 if (typeof window !== 'undefined') {
   window.TripSimulator = TripSimulator;
 }
-

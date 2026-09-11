@@ -612,3 +612,11 @@ body {
     height: 50vh;
   }
 }
+
+.brand-logo-img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+

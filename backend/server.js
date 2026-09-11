@@ -27,15 +27,15 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/transitflow';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/sancharsaathi';
 
 mongoose.connect(MONGODB_URI, {
   serverSelectionTimeoutMS: 2500
 }).then(async () => {
-  console.log('[TransitFlow] Connected to MongoDB database successfully.');
+  console.log('[Sanchar Saathi] Connected to MongoDB database successfully.');
   await syncInitialData();
 }).catch((err) => {
-  console.log('[TransitFlow] MongoDB connection optional/unavailable. Operating in high-resiliency store mode.');
+  console.log('[Sanchar Saathi] MongoDB connection optional/unavailable. Operating in high-resiliency store mode.');
 });
 
 app.use(cors());
@@ -227,5 +227,6 @@ io.on('connection', async (socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`[TransitFlow Server] Running on http://localhost:${PORT}`);
+  console.log(`[Sanchar Saathi Server] Running on http://localhost:${PORT}`);
 });
+

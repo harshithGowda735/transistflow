@@ -1,8 +1,11 @@
+const routeRoadCache = {};
+
 class TransitMap {
   constructor(elementId, initialCenter = [12.9774, 77.5708], initialZoom = 13) {
     this.map = L.map(elementId, { zoomControl: true }).setView(initialCenter, initialZoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19
     }).addTo(this.map);
 
     this.routePolyline = null;
@@ -11,6 +14,7 @@ class TransitMap {
     this.routeLayers = [];
     this.userLocationMarker = null;
     this.destMarker = null;
+    this.activeRouteKey = null;
   }
 
   setUserLocation(lat, lng) {
@@ -39,11 +43,15 @@ class TransitMap {
   async fetchRoadPath(stops) {
     if (!stops || stops.length < 2) return null;
     const coordsParam = stops.map(s => `${s.lng},${s.lat}`).join(';');
+    if (routeRoadCache[coordsParam]) {
+      return routeRoadCache[coordsParam];
+    }
 
     try {
       const res = await fetch(`/api/route/osrm?coords=${encodeURIComponent(coordsParam)}`);
       const data = await res.json();
       if (data.success && data.path && data.path.length > 0) {
+        routeRoadCache[coordsParam] = data.path;
         return data.path;
       }
     } catch (e) {}
@@ -53,7 +61,9 @@ class TransitMap {
       const directRes = await fetch(directUrl);
       const directData = await directRes.json();
       if (directData.code === 'Ok' && directData.routes && directData.routes[0]) {
-        return directData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        const roadCoords = directData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        routeRoadCache[coordsParam] = roadCoords;
+        return roadCoords;
       }
     } catch (e) {}
 
@@ -62,6 +72,16 @@ class TransitMap {
 
   async drawDynamicRoute(origin, dest, route, status = 'ON TIME') {
     if (!route || !route.stops || route.stops.length === 0) return;
+
+    const routeKey = `${route.routeId}_${origin}_${dest}`;
+    const polyColor = status === 'DELAYED' ? '#ea580c' : (status === 'ROUTE_DEVIATION' ? '#ef4444' : '#2563eb');
+
+    if (this.activeRouteKey === routeKey && this.routePolyline) {
+      this.routePolyline.setStyle({ color: polyColor });
+      return;
+    }
+
+    this.activeRouteKey = routeKey;
 
     if (this.routePolyline) {
       this.map.removeLayer(this.routePolyline);
@@ -76,11 +96,8 @@ class TransitMap {
     this.stopMarkers.forEach(m => this.map.removeLayer(m));
     this.stopMarkers = [];
 
-    const roadPath = await this.fetchRoadPath(route.stops);
-    const polyPath = roadPath && roadPath.length > 0 ? roadPath : (route.path || route.stops.map(s => [s.lat, s.lng]));
-
-    const polyColor = status === 'DELAYED' ? '#ea580c' : (status === 'ROUTE_DEVIATION' ? '#ef4444' : '#2563eb');
-    this.routePolyline = L.polyline(polyPath, {
+    const immediatePath = route.path || route.stops.map(s => [s.lat, s.lng]);
+    this.routePolyline = L.polyline(immediatePath, {
       color: polyColor,
       weight: 5,
       opacity: 0.9,
@@ -119,9 +136,15 @@ class TransitMap {
       }
     });
 
-    if (polyPath && polyPath.length > 0) {
-      this.map.fitBounds(L.polyline(polyPath).getBounds(), { padding: [40, 40] });
+    if (immediatePath && immediatePath.length > 0) {
+      this.map.fitBounds(L.polyline(immediatePath).getBounds(), { padding: [40, 40] });
     }
+
+    this.fetchRoadPath(route.stops).then(roadPath => {
+      if (roadPath && roadPath.length > 0 && this.routePolyline && this.activeRouteKey === routeKey) {
+        this.routePolyline.setLatLngs(roadPath);
+      }
+    });
   }
 
   async drawAllRoutes(routesMap) {
@@ -129,8 +152,7 @@ class TransitMap {
     this.routeLayers = [];
 
     for (const route of Object.values(routesMap)) {
-      const roadPath = await this.fetchRoadPath(route.stops);
-      const polyPath = roadPath || route.path || route.stops.map(s => [s.lat, s.lng]);
+      const polyPath = route.path || route.stops.map(s => [s.lat, s.lng]);
 
       const poly = L.polyline(polyPath, {
         color: '#2563eb',
@@ -151,6 +173,12 @@ class TransitMap {
         }).addTo(this.map);
         marker.bindPopup(`<strong>${stop.name}</strong><br>${route.name}`);
         this.routeLayers.push(marker);
+      });
+
+      this.fetchRoadPath(route.stops).then(roadPath => {
+        if (roadPath && roadPath.length > 0 && poly) {
+          poly.setLatLngs(roadPath);
+        }
       });
     }
   }
@@ -181,18 +209,10 @@ class TransitMap {
 
     if (this.busMarkers[bus.busNumber]) {
       const existingMarker = this.busMarkers[bus.busNumber];
-      const el = existingMarker.getElement();
-      if (el) {
-        el.style.transition = 'transform 1s cubic-bezier(0.2, 0.8, 0.2, 1)';
-      }
       existingMarker.setLatLng([lat, lng]);
       existingMarker.setIcon(customIcon);
     } else {
       const newMarker = L.marker([lat, lng], { icon: customIcon, zIndexOffset: 950 }).addTo(this.map);
-      const el = newMarker.getElement();
-      if (el) {
-        el.style.transition = 'transform 1s cubic-bezier(0.2, 0.8, 0.2, 1)';
-      }
       this.busMarkers[bus.busNumber] = newMarker;
     }
 
@@ -208,7 +228,8 @@ class TransitMap {
     `);
 
     if (panTo) {
-      this.map.panTo([lat, lng], { animate: true, duration: 1.0 });
+      this.map.panTo([lat, lng], { animate: true, duration: 1.2 });
     }
   }
 }
+

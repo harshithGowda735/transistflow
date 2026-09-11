@@ -276,16 +276,73 @@ function renderView() {
   }
 }
 
+let passengerSimulator = null;
+let isDemoActive = false;
+
+function toggleDemoMode() {
+  const btn = document.getElementById('btnDemoSimulate');
+  isDemoActive = !isDemoActive;
+
+  if (isDemoActive) {
+    if (btn) {
+      btn.style.background = '#dc2626';
+      btn.innerHTML = '<span>⏹</span> Stop Demo';
+    }
+    const bus = fleetData[selectedBusNumber] || Object.values(fleetData)[0];
+    const routeId = bus ? bus.routeId : 'ROUTE_23A';
+
+    if (!passengerSimulator && typeof TripSimulator !== 'undefined') {
+      passengerSimulator = new TripSimulator({
+        intervalMs: 1200,
+        onUpdate: (lat, lng, speed) => {
+          if (socket && socket.connected) {
+            socket.emit('conductor_gps', {
+              busNumber: selectedBusNumber,
+              conductorId: `COND_${selectedBusNumber}`,
+              lat,
+              lng,
+              speed
+            });
+          } else {
+            fetch('/api/gps', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                busNumber: selectedBusNumber,
+                lat,
+                lng,
+                speed
+              })
+            }).catch(() => {});
+          }
+        }
+      });
+    }
+    if (passengerSimulator) {
+      passengerSimulator.start(routeId);
+    }
+  } else {
+    if (btn) {
+      btn.style.background = '#ea580c';
+      btn.innerHTML = '<span>▶</span> Live Demo Mode';
+    }
+    if (passengerSimulator) {
+      passengerSimulator.stop();
+    }
+  }
+}
+
 function initUserGeolocation() {
+  if (transitMap) {
+    transitMap.setUserLocation(12.9774, 77.5708);
+  }
   if (navigator.geolocation && transitMap) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         transitMap.setUserLocation(pos.coords.latitude, pos.coords.longitude);
       },
-      () => {
-        transitMap.setUserLocation(12.9716, 77.5946);
-      },
-      { timeout: 4000 }
+      () => {},
+      { timeout: 3000, maximumAge: 60000, enableHighAccuracy: false }
     );
   }
 }
@@ -324,3 +381,4 @@ window.addEventListener('DOMContentLoaded', () => {
     })
     .catch(() => {});
 });
+
