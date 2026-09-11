@@ -168,7 +168,12 @@ app.get('/api/route/osrm', async (req, res) => {
 
   try {
     const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
-    const response = await fetch(url);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
       throw new Error(`OSRM API response status: ${response.status}`);
     }
@@ -215,6 +220,17 @@ io.on('connection', async (socket) => {
       } catch (e) {}
     }
   });
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\n[Sanchar Saathi] ERROR: Port ${PORT} is already in use.`);
+    console.error(`[Sanchar Saathi] Run this to free it and restart:`);
+    console.error(`  npx kill-port ${PORT} && npm run dev\n`);
+    process.exit(1);
+  } else {
+    throw err;
+  }
 });
 
 server.listen(PORT, () => {

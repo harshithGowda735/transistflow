@@ -5,7 +5,7 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "node backend/server.js",
+    "dev": "npx kill-port 3000 && node backend/server.js",
     "backend": "node backend/server.js",
     "frontend": "npx serve frontend/public",
     "driver": "npx serve driver-app/public"
@@ -13,7 +13,6 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "mongoose": "^9.9.5",
     "socket.io": "^4.7.5"
   }
 }

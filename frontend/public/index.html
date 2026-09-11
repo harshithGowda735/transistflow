@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-  
+
   <header class="gov-header">
     <div class="brand-section">
       <img src="/assets/bus_pin.svg" class="brand-logo-img" alt="Sanchar Saathi" />
@@ -20,12 +20,12 @@
         <div style="display: flex; align-items: baseline; gap: 8px;">
           <span class="brand-title">Sanchar Saathi</span>
         </div>
-        <div class="gov-subtext">Real-Time Bus Tracking & Transit Operations</div>
+        <div class="gov-subtext">Real-Time Bus Tracking &amp; Transit Operations</div>
       </div>
     </div>
     <div class="header-links">
       <button id="btnDemoSimulate" class="btn" style="background: #ea580c; color: white; padding: 6px 14px; font-size: 12px; font-weight: 800; border-radius: 6px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onclick="toggleDemoMode()">
-        <span>▶</span> Live Demo Mode
+        Live Demo Mode
       </button>
       <a href="/index.html" class="nav-link active">Passenger View</a>
       <a href="/admin.html" class="nav-link">Owner Dashboard</a>
@@ -33,13 +33,12 @@
     </div>
   </header>
 
-  
   <div class="app-container">
-    
+
     <aside class="sidebar-panel">
-      
+
       <div class="route-selector-card">
-        
+
         <div style="margin-bottom: 14px;">
           <div class="section-label">Origin Stop</div>
           <div class="search-wrapper">
@@ -48,13 +47,11 @@
           </div>
         </div>
 
-        
         <div class="swap-divider-container">
           <div class="swap-divider-line"></div>
-          <button class="swap-circle-btn" onclick="swapLocations()" title="Reverse Route">⇅</button>
+          <button class="swap-circle-btn" onclick="swapLocations()" title="Reverse Route">&#8645;</button>
         </div>
 
-        
         <div style="margin-top: 14px; margin-bottom: 6px;">
           <div class="section-label">Destination Stop</div>
           <div class="search-wrapper">
@@ -64,13 +61,10 @@
         </div>
       </div>
 
-      
       <div id="alertContainer"></div>
 
-      
       <div id="fallbackContainer"></div>
 
-      
       <div style="padding: 16px;">
         <div style="background: var(--bg-subtle); border-radius: var(--radius-md); padding: 14px; border: 1px solid var(--border-color); margin-bottom: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
@@ -103,23 +97,33 @@
           </div>
         </div>
 
-        
-        <div>
-          <h3 style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.5px;">Upcoming Stops</h3>
-          <div id="stopsList" style="display: flex; flex-direction: column; gap: 10px;">
-            
+        <div class="sidebar-tabs">
+          <button class="sidebar-tab active" id="tabUpcoming" onclick="switchTab('upcoming')">Upcoming Stops</button>
+          <button class="sidebar-tab" id="tabStrategy" onclick="switchTab('strategy')">Business Strategy</button>
+        </div>
+
+        <div id="panelUpcoming" class="tab-panel active">
+          <div id="stopsList" style="display: flex; flex-direction: column; gap: 10px; padding-top: 10px;"></div>
+        </div>
+
+        <div id="panelStrategy" class="tab-panel">
+          <div id="strategyContent" class="strategy-panel">
+            <div class="strategy-idle">
+              <div style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 18px 0;">
+                Bus is on time. No alternate ride needed.
+              </div>
+            </div>
           </div>
         </div>
+
       </div>
     </aside>
 
-    
     <main class="map-view">
       <div id="map"></div>
     </main>
   </div>
 
-  
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/simulation.js"></script>

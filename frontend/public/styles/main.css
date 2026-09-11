@@ -620,3 +620,45 @@ body {
   border-radius: 8px;
 }
 
+.user-pin-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.user-live-pin {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-dot {
+  width: 14px;
+  height: 14px;
+  background-color: #3b82f6;
+  border: 2.5px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+.user-pulse {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  background-color: rgba(59, 130, 246, 0.4);
+  border-radius: 50%;
+  z-index: 1;
+  animation: user-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes user-ping {
+  75%, 100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+

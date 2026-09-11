@@ -296,6 +296,8 @@ function renderView() {
     `).join('');
   }
 
+  renderStrategyPanel(bus);
+
   if (transitMap) {
     transitMap.drawDynamicRoute(currentOrigin, currentDestination, route, bus.status);
     transitMap.updateBusMarker(bus, true);
@@ -305,6 +307,76 @@ function renderView() {
 let passengerSimulator = null;
 let isDemoActive = false;
 
+function switchTab(tab) {
+  const tabs = ['upcoming', 'strategy'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+    const panel = document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (btn) btn.classList.toggle('active', t === tab);
+    if (panel) panel.classList.toggle('active', t === tab);
+  });
+}
+
+function renderStrategyPanel(bus) {
+  const container = document.getElementById('strategyContent');
+  if (!container) return;
+
+  const isDelayed = bus && bus.status === 'DELAYED';
+  const delayMins = (bus && bus.delayMinutes) || 0;
+
+  if (!isDelayed) {
+    container.innerHTML = `
+      <div class="strategy-idle">
+        <div style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 18px 0;">
+          Bus is on time. No alternate ride needed.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const discount = 12;
+  const rides = [
+    {
+      name: 'Rapido',
+      color: '#FFD700',
+      textColor: '#000',
+      badge: 'RP',
+      eta: '3 min',
+      type: 'Bike Taxi',
+      price: 'From Rs. 45',
+      link: 'https://rapido.bike'
+    }
+  ];
+
+  container.innerHTML = `
+    <div class="strategy-delay-header">
+      <div class="strategy-delay-badge">Bus Delayed +${delayMins} min</div>
+      <div style="font-size: 12px; color: #7c2d12; margin-top: 6px; font-weight: 600;">
+        Book a ride now with ${discount}% exclusive discount.
+      </div>
+    </div>
+    ${rides.map(r => `
+      <a class="ride-option-card" href="${r.link}" target="_blank" rel="noopener">
+        <div class="ride-option-left">
+          <div class="ride-avatar" style="background: ${r.color}; color: ${r.textColor || '#fff'};">${r.badge}</div>
+          <div>
+            <div class="ride-name">${r.name} <span class="ride-type">${r.type}</span></div>
+            <div class="ride-eta">Arrives in ${r.eta}</div>
+          </div>
+        </div>
+        <div class="ride-option-right">
+          <div class="ride-price">${r.price}</div>
+          <div class="ride-discount">${discount}% OFF</div>
+        </div>
+      </a>
+    `).join('')}
+    <div style="font-size: 10px; color: var(--text-muted); margin-top: 10px; text-align: center;">
+      Discount applied automatically on booking via links above.
+    </div>
+  `;
+}
+
 function toggleDemoMode() {
   const btn = document.getElementById('btnDemoSimulate');
   isDemoActive = !isDemoActive;
@@ -312,7 +384,7 @@ function toggleDemoMode() {
   if (isDemoActive) {
     if (btn) {
       btn.style.background = '#dc2626';
-      btn.innerHTML = '<span>⏹</span> Stop Demo';
+      btn.innerHTML = 'Stop Demo';
     }
     const bus = fleetData[selectedBusNumber] || Object.values(fleetData)[0];
     const routeId = bus ? bus.routeId : 'ROUTE_BLR_MYS';
@@ -350,7 +422,7 @@ function toggleDemoMode() {
   } else {
     if (btn) {
       btn.style.background = '#ea580c';
-      btn.innerHTML = '<span>▶</span> Live Demo Mode';
+      btn.innerHTML = 'Live Demo Mode';
     }
     if (passengerSimulator) {
       passengerSimulator.stop();
@@ -362,13 +434,27 @@ function initUserGeolocation() {
   if (transitMap) {
     transitMap.setUserLocation(12.9774, 77.5708);
   }
-  if (navigator.geolocation && transitMap) {
+  if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        transitMap.setUserLocation(pos.coords.latitude, pos.coords.longitude);
+        if (transitMap) {
+          transitMap.setUserLocation(pos.coords.latitude, pos.coords.longitude);
+        }
+      },
+      (err) => {
+        console.warn('Geolocation positioning notice:', err);
+      },
+      { timeout: 5000, maximumAge: 10000, enableHighAccuracy: true }
+    );
+
+    navigator.geolocation.watchPosition(
+      (pos) => {
+        if (transitMap) {
+          transitMap.setUserLocation(pos.coords.latitude, pos.coords.longitude);
+        }
       },
       () => {},
-      { timeout: 3000, maximumAge: 60000, enableHighAccuracy: false }
+      { timeout: 10000, maximumAge: 5000, enableHighAccuracy: true }
     );
   }
 }
@@ -377,15 +463,20 @@ const socket = (typeof io !== 'undefined') ? io() : null;
 
 if (socket) {
   socket.on('fleet_init', (data) => {
-    fleetData = data.buses;
-    routesData = data.routes;
+    fleetData = data.buses || {};
+    routesData = data.routes || {};
     updateKnownStopsFromRoutes();
-    renderView();
+    if (transitMap) {
+      resolveRouteMatch();
+      renderView();
+    }
   });
 
   socket.on('fleet_update', (data) => {
-    fleetData = data.buses;
-    renderView();
+    fleetData = data.buses || {};
+    if (transitMap) {
+      renderView();
+    }
   });
 }
 
@@ -396,13 +487,14 @@ window.addEventListener('DOMContentLoaded', () => {
   fetch('/api/buses')
     .then(res => res.json())
     .then(data => {
-      fleetData = data.buses;
+      if (data.success) fleetData = data.buses;
       return fetch('/api/routes');
     })
     .then(res => res.json())
     .then(data => {
-      routesData = data.routes;
+      if (data.success) routesData = data.routes;
       updateKnownStopsFromRoutes();
+      resolveRouteMatch();
       renderView();
     })
     .catch(() => {});

@@ -1,7 +1,7 @@
 class TripSimulator {
   constructor(options = {}) {
     this.onUpdate = options.onUpdate || null;
-    this.intervalMs = options.intervalMs || 1200;
+    this.intervalMs = options.intervalMs || 1000;
     this.timer = null;
     this.isActive = false;
     this.currentIndex = 0;
@@ -14,20 +14,21 @@ class TripSimulator {
       const data = await res.json();
       if (data.success && data.routes && data.routes[routeId]) {
         const route = data.routes[routeId];
+        if (route.path && route.path.length > 0) {
+          return route.path;
+        }
         if (route.stops && route.stops.length > 1) {
           const coords = route.stops.map(s => `${s.lng},${s.lat}`).join(';');
           try {
-            const osrmRes = await fetch(`/api/route/osrm?coords=${encodeURIComponent(coords)}`);
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 1500);
+            const osrmRes = await fetch(`/api/route/osrm?coords=${encodeURIComponent(coords)}`, { signal: controller.signal });
+            clearTimeout(timer);
             const osrmData = await osrmRes.json();
             if (osrmData.success && osrmData.path && osrmData.path.length > 0) {
               return osrmData.path;
             }
           } catch (e) {}
-        }
-        if (route.path && route.path.length > 0) {
-          return route.path;
-        }
-        if (route.stops) {
           return route.stops.map(s => [s.lat, s.lng]);
         }
       }

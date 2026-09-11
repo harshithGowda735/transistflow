@@ -140,6 +140,25 @@ const INITIAL_BUSES = {
     nextStop: 'Kengeri TTMC',
     lastUpdated: new Date()
   },
+  'KA-09-F-2024': {
+    busNumber: 'KA-09-F-2024',
+    registrationNumber: 'KA-09-F-2024',
+    routeId: 'ROUTE_MYS_BLR',
+    conductorId: 'COND_2024',
+    conductorName: 'Anand Kumar',
+    capacity: 55,
+    status: 'ON TIME',
+    isTripActive: false,
+    currentLocation: { lat: 12.3106, lng: 76.6570 },
+    speedKmph: 62,
+    etaMinutes: 15,
+    delayMinutes: 0,
+    expectedProgressPct: 0,
+    actualProgressPct: 0,
+    distanceRemainingKm: 138.0,
+    nextStop: 'Srirangapatna',
+    lastUpdated: new Date()
+  },
   '23A': {
     busNumber: '23A',
     registrationNumber: 'KA-01-F-2301',
