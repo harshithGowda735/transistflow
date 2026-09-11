@@ -49,7 +49,7 @@ async function handleOwnerAddBus(event) {
     }
 
     if (notice) {
-      notice.innerText = `Bus ${busNumber} registered successfully in MongoDB! Available in Driver Terminal.`;
+      notice.innerText = `Bus ${busNumber} registered successfully! Available in Driver Terminal.`;
       notice.style.display = 'block';
       setTimeout(() => { notice.style.display = 'none'; }, 5000);
     }

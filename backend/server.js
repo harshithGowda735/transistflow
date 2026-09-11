@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const cors = require('cors');
-const mongoose = require('mongoose');
 const { Server } = require('socket.io');
 
 const {
@@ -27,16 +26,8 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/sancharsaathi';
 
-mongoose.connect(MONGODB_URI, {
-  serverSelectionTimeoutMS: 2500
-}).then(async () => {
-  console.log('[Sanchar Saathi] Connected to MongoDB database successfully.');
-  await syncInitialData();
-}).catch((err) => {
-  console.log('[Sanchar Saathi] MongoDB connection optional/unavailable. Operating in high-resiliency store mode.');
-});
+syncInitialData();
 
 app.use(cors());
 app.use(express.json());

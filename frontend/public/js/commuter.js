@@ -1,21 +1,28 @@
-let selectedBusNumber = '23A';
-let currentOrigin = 'Majestic';
-let currentDestination = 'Vijayanagar';
+let selectedBusNumber = 'KA-57-F-1008';
+let currentOrigin = 'Majestic KBS';
+let currentDestination = 'Mysuru Suburb Stand';
 let fleetData = {};
 let routesData = {};
 let transitMap = null;
 let toastDismissed = false;
 
 let knownStops = [
-  { name: 'Majestic KBS', code: 'Majestic', city: 'Bengaluru' },
+  { name: 'Majestic KBS', code: 'Majestic KBS', city: 'Bengaluru' },
+  { name: 'Kengeri TTMC', code: 'Kengeri TTMC', city: 'Bengaluru' },
+  { name: 'Bidadi', code: 'Bidadi', city: 'Ramanagara Dist' },
+  { name: 'Ramanagara', code: 'Ramanagara', city: 'Ramanagara' },
+  { name: 'Channapatna', code: 'Channapatna', city: 'Ramanagara Dist' },
+  { name: 'Maddur', code: 'Maddur', city: 'Mandya Dist' },
+  { name: 'Mandya', code: 'Mandya', city: 'Mandya' },
+  { name: 'Srirangapatna', code: 'Srirangapatna', city: 'Mandya Dist' },
+  { name: 'Mysuru Suburb Stand', code: 'Mysuru Suburb Stand', city: 'Mysuru' },
   { name: 'KR Market', code: 'KR Market', city: 'Bengaluru' },
   { name: 'Sirsi Circle', code: 'Sirsi Circle', city: 'Bengaluru' },
-  { name: 'Vijayanagar TTMC', code: 'Vijayanagar', city: 'Bengaluru' },
+  { name: 'Vijayanagar TTMC', code: 'Vijayanagar TTMC', city: 'Bengaluru' },
   { name: 'Attiguppe', code: 'Attiguppe', city: 'Bengaluru' },
-  { name: 'Bogadi Ring Road', code: 'Bogadi', city: 'Mysuru' },
-  { name: 'Kuvempunagar Complex', code: 'Kuvempunagar', city: 'Mysuru' },
-  { name: 'Saraswathipuram', code: 'Saraswathipuram', city: 'Mysuru' },
-  { name: 'Mysuru Suburb Stand', code: 'Mysuru Stand', city: 'Mysuru' }
+  { name: 'Bogadi Ring Road', code: 'Bogadi Ring Road', city: 'Mysuru' },
+  { name: 'Kuvempunagar Complex', code: 'Kuvempunagar Complex', city: 'Mysuru' },
+  { name: 'Saraswathipuram', code: 'Saraswathipuram', city: 'Mysuru' }
 ];
 
 function updateKnownStopsFromRoutes() {
@@ -119,6 +126,12 @@ function swapLocations() {
   document.getElementById('inputDest').value = currentDestination;
 
   resolveRouteMatch();
+
+  if (isDemoActive && passengerSimulator) {
+    const bus = fleetData[selectedBusNumber] || Object.values(fleetData)[0];
+    const routeId = bus ? bus.routeId : 'ROUTE_BLR_MYS';
+    passengerSimulator.start(routeId);
+  }
 }
 
 function resolveRouteMatch() {
@@ -130,12 +143,25 @@ function resolveRouteMatch() {
 
   for (const route of routesList) {
     const stops = route.stops || [];
-    const hasOrigin = stops.some(s => s.name && s.name.toLowerCase().includes(o));
-    const hasDest = stops.some(s => s.name && s.name.toLowerCase().includes(d));
+    const originIndex = stops.findIndex(s => s.name && s.name.toLowerCase().includes(o));
+    const destIndex = stops.findIndex(s => s.name && s.name.toLowerCase().includes(d));
 
-    if (hasOrigin && hasDest) {
+    if (originIndex !== -1 && destIndex !== -1 && originIndex < destIndex) {
       matchedRouteId = route.routeId;
       break;
+    }
+  }
+
+  if (!matchedRouteId) {
+    for (const route of routesList) {
+      const stops = route.stops || [];
+      const hasOrigin = stops.some(s => s.name && s.name.toLowerCase().includes(o));
+      const hasDest = stops.some(s => s.name && s.name.toLowerCase().includes(d));
+
+      if (hasOrigin && hasDest) {
+        matchedRouteId = route.routeId;
+        break;
+      }
     }
   }
 
@@ -289,11 +315,11 @@ function toggleDemoMode() {
       btn.innerHTML = '<span>⏹</span> Stop Demo';
     }
     const bus = fleetData[selectedBusNumber] || Object.values(fleetData)[0];
-    const routeId = bus ? bus.routeId : 'ROUTE_23A';
+    const routeId = bus ? bus.routeId : 'ROUTE_BLR_MYS';
 
     if (!passengerSimulator && typeof TripSimulator !== 'undefined') {
       passengerSimulator = new TripSimulator({
-        intervalMs: 1200,
+        intervalMs: 1000,
         onUpdate: (lat, lng, speed) => {
           if (socket && socket.connected) {
             socket.emit('conductor_gps', {

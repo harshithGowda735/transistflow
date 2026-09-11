@@ -1,11 +1,76 @@
-const {
-  BusModel,
-  RouteModel,
-  TripLocationLogModel,
-  createAlertModel
-} = require('./models');
+const { createAlertModel } = require('./models');
 
 const INITIAL_ROUTES = {
+  'ROUTE_BLR_MYS': {
+    routeId: 'ROUTE_BLR_MYS',
+    name: 'Majestic KBS → Mysuru Suburb Stand',
+    city: 'Bengaluru - Mysuru Expressway',
+    stops: [
+      { name: 'Majestic KBS', lat: 12.9774, lng: 77.5708, order: 1 },
+      { name: 'Kengeri TTMC', lat: 12.9103, lng: 77.4842, order: 2 },
+      { name: 'Bidadi', lat: 12.7963, lng: 77.3872, order: 3 },
+      { name: 'Ramanagara', lat: 12.7150, lng: 77.2811, order: 4 },
+      { name: 'Channapatna', lat: 12.6518, lng: 77.2036, order: 5 },
+      { name: 'Maddur', lat: 12.5843, lng: 77.0450, order: 6 },
+      { name: 'Mandya', lat: 12.5242, lng: 76.8958, order: 7 },
+      { name: 'Srirangapatna', lat: 12.4227, lng: 76.6953, order: 8 },
+      { name: 'Mysuru Suburb Stand', lat: 12.3106, lng: 76.6570, order: 9 }
+    ],
+    path: [
+      [12.9774, 77.5708],
+      [12.9460, 77.5350],
+      [12.9103, 77.4842],
+      [12.8550, 77.4350],
+      [12.7963, 77.3872],
+      [12.7560, 77.3320],
+      [12.7150, 77.2811],
+      [12.6820, 77.2400],
+      [12.6518, 77.2036],
+      [12.6180, 77.1250],
+      [12.5843, 77.0450],
+      [12.5550, 76.9700],
+      [12.5242, 76.8958],
+      [12.4730, 76.7950],
+      [12.4227, 76.6953],
+      [12.3660, 76.6760],
+      [12.3106, 76.6570]
+    ]
+  },
+  'ROUTE_MYS_BLR': {
+    routeId: 'ROUTE_MYS_BLR',
+    name: 'Mysuru Suburb Stand → Majestic KBS',
+    city: 'Mysuru - Bengaluru Expressway',
+    stops: [
+      { name: 'Mysuru Suburb Stand', lat: 12.3106, lng: 76.6570, order: 1 },
+      { name: 'Srirangapatna', lat: 12.4227, lng: 76.6953, order: 2 },
+      { name: 'Mandya', lat: 12.5242, lng: 76.8958, order: 3 },
+      { name: 'Maddur', lat: 12.5843, lng: 77.0450, order: 4 },
+      { name: 'Channapatna', lat: 12.6518, lng: 77.2036, order: 5 },
+      { name: 'Ramanagara', lat: 12.7150, lng: 77.2811, order: 6 },
+      { name: 'Bidadi', lat: 12.7963, lng: 77.3872, order: 7 },
+      { name: 'Kengeri TTMC', lat: 12.9103, lng: 77.4842, order: 8 },
+      { name: 'Majestic KBS', lat: 12.9774, lng: 77.5708, order: 9 }
+    ],
+    path: [
+      [12.3106, 76.6570],
+      [12.3660, 76.6760],
+      [12.4227, 76.6953],
+      [12.4730, 76.7950],
+      [12.5242, 76.8958],
+      [12.5550, 76.9700],
+      [12.5843, 77.0450],
+      [12.6180, 77.1250],
+      [12.6518, 77.2036],
+      [12.6820, 77.2400],
+      [12.7150, 77.2811],
+      [12.7560, 77.3320],
+      [12.7963, 77.3872],
+      [12.8550, 77.4350],
+      [12.9103, 77.4842],
+      [12.9460, 77.5350],
+      [12.9774, 77.5708]
+    ]
+  },
   'ROUTE_23A': {
     routeId: 'ROUTE_23A',
     name: 'Majestic → Vijayanagar',
@@ -56,6 +121,25 @@ const INITIAL_ROUTES = {
 };
 
 const INITIAL_BUSES = {
+  'KA-57-F-1008': {
+    busNumber: 'KA-57-F-1008',
+    registrationNumber: 'KA-57-F-1008',
+    routeId: 'ROUTE_BLR_MYS',
+    conductorId: 'COND_1008',
+    conductorName: 'Manjunath Gowda',
+    capacity: 55,
+    status: 'ON TIME',
+    isTripActive: false,
+    currentLocation: { lat: 12.9774, lng: 77.5708 },
+    speedKmph: 58,
+    etaMinutes: 12,
+    delayMinutes: 0,
+    expectedProgressPct: 0,
+    actualProgressPct: 0,
+    distanceRemainingKm: 138.0,
+    nextStop: 'Kengeri TTMC',
+    lastUpdated: new Date()
+  },
   '23A': {
     busNumber: '23A',
     registrationNumber: 'KA-01-F-2301',
@@ -138,39 +222,15 @@ function findNextStop(currentLat, currentLng, stops) {
 }
 
 async function syncInitialData() {
-  try {
-    for (const [rId, rData] of Object.entries(INITIAL_ROUTES)) {
-      await RouteModel.findOneAndUpdate({ routeId: rId }, rData, { upsert: true, new: true }).catch(() => {});
-    }
-    for (const [bNo, bData] of Object.entries(INITIAL_BUSES)) {
-      await BusModel.findOneAndUpdate({ busNumber: bNo }, bData, { upsert: true, new: true }).catch(() => {});
-    }
-  } catch (e) {}
+  inMemoryBuses = { ...INITIAL_BUSES };
+  inMemoryRoutes = { ...INITIAL_ROUTES };
 }
 
 async function getAllBuses() {
-  try {
-    const docs = await BusModel.find({}).lean().exec();
-    if (docs && docs.length > 0) {
-      const map = {};
-      docs.forEach(b => { map[b.busNumber] = b; });
-      inMemoryBuses = map;
-      return map;
-    }
-  } catch (e) {}
   return inMemoryBuses;
 }
 
 async function getAllRoutes() {
-  try {
-    const docs = await RouteModel.find({}).lean().exec();
-    if (docs && docs.length > 0) {
-      const map = {};
-      docs.forEach(r => { map[r.routeId] = r; });
-      inMemoryRoutes = map;
-      return map;
-    }
-  } catch (e) {}
   return inMemoryRoutes;
 }
 
@@ -234,19 +294,6 @@ async function registerNewBus(busData) {
     lastUpdated: new Date()
   };
 
-  try {
-    await BusModel.findOneAndUpdate(
-      { busNumber: busNo },
-      newBusObj,
-      { upsert: true, new: true, runValidators: true }
-    ).exec();
-  } catch (e) {
-    if (e.name === 'ValidationError' || e.code === 11000) {
-      e.status = 400;
-      throw e;
-    }
-  }
-
   inMemoryBuses[busNo] = newBusObj;
   return newBusObj;
 }
@@ -273,19 +320,6 @@ async function registerNewRoute(routeData) {
     path: Array.isArray(path) ? path : []
   };
 
-  try {
-    await RouteModel.findOneAndUpdate(
-      { routeId: rId },
-      newRoute,
-      { upsert: true, new: true, runValidators: true }
-    ).exec();
-  } catch (e) {
-    if (e.name === 'ValidationError') {
-      e.status = 400;
-      throw e;
-    }
-  }
-
   inMemoryRoutes[rId] = newRoute;
   return newRoute;
 }
@@ -302,15 +336,30 @@ async function processGPSUpdate(busNumber, lat, lng, speed = 30) {
   }
 
   const buses = await getAllBuses();
-  const bus = buses[busNumber];
+  let bus = buses[busNumber];
   if (!bus) {
-    const err = new Error(`Bus ${busNumber} not registered`);
-    err.status = 404;
-    throw err;
+    bus = {
+      busNumber,
+      registrationNumber: busNumber,
+      routeId: 'ROUTE_BLR_MYS',
+      conductorId: `COND_${busNumber}`,
+      conductorName: 'Assigned Driver',
+      capacity: 50,
+      status: 'ON TIME',
+      isTripActive: true,
+      currentLocation: { lat: parsedLat, lng: parsedLng },
+      speedKmph: Math.round(parsedSpeed),
+      etaMinutes: 10,
+      delayMinutes: 0,
+      distanceRemainingKm: 10.0,
+      nextStop: 'En route',
+      lastUpdated: new Date()
+    };
+    inMemoryBuses[busNumber] = bus;
   }
 
   const routes = await getAllRoutes();
-  const route = routes[bus.routeId] || INITIAL_ROUTES[bus.routeId];
+  const route = routes[bus.routeId] || INITIAL_ROUTES[bus.routeId] || INITIAL_ROUTES['ROUTE_BLR_MYS'];
 
   bus.currentLocation = { lat: parsedLat, lng: parsedLng };
   bus.speedKmph = Math.round(parsedSpeed);
@@ -337,7 +386,7 @@ async function processGPSUpdate(busNumber, lat, lng, speed = 30) {
     const destWaypoint = path[path.length - 1];
     bus.distanceRemainingKm = parseFloat(getDistanceKm(parsedLat, parsedLng, destWaypoint[0], destWaypoint[1]).toFixed(1));
 
-    const effectiveSpeed = bus.speedKmph > 5 ? bus.speedKmph : 20;
+    const effectiveSpeed = bus.speedKmph > 5 ? bus.speedKmph : 40;
     const calculatedEtaMinutes = Math.max(1, Math.round((bus.distanceRemainingKm / effectiveSpeed) * 60));
 
     const deviation = checkRouteDeviation(parsedLat, parsedLng, path);
@@ -360,23 +409,6 @@ async function processGPSUpdate(busNumber, lat, lng, speed = 30) {
   }
 
   inMemoryBuses[busNumber] = bus;
-
-  try {
-    await BusModel.findOneAndUpdate(
-      { busNumber },
-      bus,
-      { upsert: true, new: true }
-    ).exec();
-
-    await TripLocationLogModel.create({
-      busNumber,
-      lat: parsedLat,
-      lng: parsedLng,
-      speed: parsedSpeed,
-      timestamp: new Date()
-    }).catch(() => {});
-  } catch (e) {}
-
   return { bus, route };
 }
 
@@ -393,14 +425,6 @@ async function setTripStatus(busNumber, active) {
   bus.status = active ? 'LIVE' : 'READY';
   bus.lastUpdated = new Date();
   inMemoryBuses[busNumber] = bus;
-
-  try {
-    await BusModel.findOneAndUpdate(
-      { busNumber },
-      { isTripActive: active, status: bus.status, lastUpdated: bus.lastUpdated },
-      { new: true }
-    ).exec();
-  } catch (e) {}
 
   return bus;
 }
@@ -426,4 +450,5 @@ module.exports = {
   setTripStatus,
   syncInitialData
 };
+
 
